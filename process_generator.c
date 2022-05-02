@@ -37,6 +37,23 @@ void readFile(struct Queue* processQueue) {
     fclose(file);
 }
 
+int getSchedulingAlgorithm() {
+    int algorithm;
+    printf("Which scheduling algorithm do you want?\n");
+    printf("=======================================\n");
+    printf("[1] Non-preemptive Highest Priority First (HPF)\n");
+    printf("[2] Shortest Remaining time Next (SRTN)\n");
+    printf("[3] Round Robin (RR)\n");
+    printf("=======================================\n");
+    scanf("%d", &algorithm);
+    while (algorithm > 3 || algorithm < 1)
+    {
+        printf("Enter a number from 1 to 3\n");
+        scanf("%d", &algorithm);
+    }
+    
+    return algorithm;
+}
 int main(int argc, char * argv[])
 {
     // signal(SIGINT, clearResources);
@@ -46,17 +63,37 @@ int main(int argc, char * argv[])
     readFile(processQueue);
 
     // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
+    int algorithm = getSchedulingAlgorithm();
+
     // 3. Initiate and create the scheduler and clock processes.
+    int clkpid = fork();
+    if (clkpid == 0) {
+        //run the clk file
+        char* args[] = {"./clk.o", NULL};
+        execv(args[0], args);
+    }
+
+    int schedulerpid = fork();
+    if (schedulerpid == 0) {
+        //run the scheduler file
+        int length = snprintf( NULL, 0, "%d", algorithm );
+        char* str = malloc( length + 1 );
+        snprintf( str, length + 1, "%d", algorithm );
+        char* args[] = {"./scheduler.o", str, NULL};
+        execv(args[0], args);
+    }
     // 4. Use this function after creating the clock process to initialize clock
-    // initClk();
+    initClk();
     // To get time use this
-    // int x = getClk();
-    // printf("current time is %d\n", x);
+    int clk = getClk();
+    printf("current time is %d\n", clk);
+
     // TODO Generation Main Loop
     // 5. Create a data structure for processes and provide it with its parameters.
     // 6. Send the information to the scheduler at the appropriate time.
+
     // 7. Clear clock resources
-    // destroyClk(true);
+    destroyClk(true);
 }
 
 void clearResources(int signum)
