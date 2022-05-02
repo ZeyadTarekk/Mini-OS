@@ -54,9 +54,14 @@ int getSchedulingAlgorithm() {
     
     return algorithm;
 }
+
+void sendProcess(struct ProcessStruct* process) {
+
+}
+
 int main(int argc, char * argv[])
 {
-    // signal(SIGINT, clearResources);
+    signal(SIGINT, clearResources);
     // TODO Initialization
     // 1. Read the input files.
     struct Queue* processQueue = createQueue();
@@ -83,6 +88,7 @@ int main(int argc, char * argv[])
         execv(args[0], args);
     }
     // 4. Use this function after creating the clock process to initialize clock
+    sleep(1);
     initClk();
     // To get time use this
     int clk = getClk();
@@ -91,6 +97,28 @@ int main(int argc, char * argv[])
     // TODO Generation Main Loop
     // 5. Create a data structure for processes and provide it with its parameters.
     // 6. Send the information to the scheduler at the appropriate time.
+    while (!isEmptyN(processQueue))
+    {
+        struct ProcessStruct* process = peekN(processQueue);
+
+        //get the current time to check with the arrival time of the process
+        clk = getClk();
+        while (process->arrivalTime != clk)
+            clk = getClk();
+        
+        printf("Process with id=%d arrived at %d\n", process->id, clk);
+        //send a signal to the schedular to be ready for the coming process
+        kill(schedulerpid, SIGUSR1);
+
+        //send the process to the schedular
+        sendProcess(process);
+
+        //remove it from the queue
+        deQueue(processQueue);
+    }
+    
+    //wait for the schedular to finish before clearing the clock resources
+    waitpid(schedulerpid, NULL, 0);
 
     // 7. Clear clock resources
     destroyClk(true);
