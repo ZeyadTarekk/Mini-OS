@@ -1,8 +1,6 @@
 #include "headers.h"
 #include <assert.h>
 
-void __SRTN_CLOCK();
-
 void __SRTN_print_process_info(const struct ProcessStruct *const);
 
 void __SRTN_run(struct ProcessStruct *const);
@@ -47,7 +45,8 @@ void __SRTN_process_finish_handler(int signum) {
      * OUTPUT      : void
      * NOTE        : Handles the process that finishes execution
      * */
-    printf("Process %d has sent me a signal\nWhich means it has finished execution\n", __running_process->pid);
+    printf("Process %d has sent me a signal %d\nWhich means it has finished execution\n", __running_process->pid,
+           signum);
 
     // DONE: set __running_process to NULL
     __running_process = NULL;
@@ -55,10 +54,21 @@ void __SRTN_process_finish_handler(int signum) {
 
 void __SRTN_run(struct ProcessStruct *const process_to_run) {
 
+    /*
+     * INPUT       : process you want to run
+     * INPUT type  : struct ProcessStruct *const
+     * OUTPUT      : void
+     * NOTE        : Runs the process :-
+     *                  1- Continue the process if it has started before
+     *                  2- Fork the process if it hasn't started before
+     * */
     //DONE: Check boolean of <startedBefore>
     if (process_to_run->startedBefore == 1) {
-        // TODO: Send a continue signal to the process using its pid in the struct (NOT EXIST YET)
-        printf("Send a continue signal to the process\n");
+        printf("Signal continue has been sent to the process\n");
+
+        // DONE: Send a continue signal to the process using its pid in the struct
+        kill(process_to_run->pid, SIGCONT);
+
     } else {
         // Create new process
         int pid = fork();
@@ -115,7 +125,7 @@ void __SRTN_stop(const struct ProcessStruct *const process_to_stop) {
     __SRTN_print_process_info(process_to_stop);
 
     // DONE: Send signal to process (stop the process)
-    kill(process_to_stop->pid, SIGUSR1);
+    kill(process_to_stop->pid, SIGTSTP);
 
     // DONE: Set the <__running_process> to NULL  __running_process = NULL;
     __running_process = NULL;
@@ -161,9 +171,8 @@ void __SRTN_save_exit_queue_state(struct ProcessStruct *const process_to_run) {
     __SRTN_print_process_info(process_to_run);
     /* DONE : Update
      *      1- running boolean
-     *      2- startedBefore
-     *      3- quitQueue
-     *      4- waitingTime
+     *      2- quitQueue
+     *      3- waitingTime
      */
     process_to_run->running = 1;
     process_to_run->quitQueue = current_time;
@@ -207,16 +216,10 @@ __SRTN_compare_remaining_time(const struct ProcessStruct *const process1, const 
 // TODO: remove this parameter after testing
 
 void SRTN(struct PQueue *priority_queue) {
+
     // Set SIGUSR2 handler to handle the process that has finished execution
     // TODO : Make sure that the one who sends the signal in file process uses the same signal as you
     signal(SIGUSR2, __SRTN_process_finish_handler);
-
-    // Initiate the clock
-    initClk();
-
-    // DONE: Allocate the Queue
-    // TODO: Uncomment this line after testing
-    // struct PQueue *priority_queue = createPriorityQueue();
 
     while (1/*TODO: There still processes in the Queue or there still processes will be received*/) {
 
@@ -237,7 +240,7 @@ void SRTN(struct PQueue *priority_queue) {
             // DONE: Pop the first process in the queue
             pop(priority_queue);
 
-            // DONE: Save the state of the poped process    => Save state function  <__SRTN_save_exit_queue_state>
+            // DONE: Save the state of the top process    => Save state function  <__SRTN_save_exit_queue_state>
             __SRTN_save_exit_queue_state(top_queue);
 
             // DONE: Run the process                        => Run process function
