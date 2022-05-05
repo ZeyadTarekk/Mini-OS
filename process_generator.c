@@ -7,6 +7,12 @@ RR --> 3
 */
 #include "headers.h"
 
+// global variables
+int msgq_id;
+struct msgbuff message;
+
+
+
 void clearResources(int);
 
 void readFile(struct Queue* processQueue) {
@@ -55,13 +61,35 @@ int getSchedulingAlgorithm() {
     return algorithm;
 }
 
-void sendProcess(struct ProcessStruct* process) {
+void intializeMessageQueue() {
+    key_t key_id = ftok("keyfile", PROSCH);
+    msgq_id = msgget(key_id, 0666 | IPC_CREAT);
 
+    if (msgq_id == -1)
+    {
+        perror("Error in create message queue");
+        exit(-1);
+    }
 }
+
+void sendProcess(struct ProcessStruct* process) {
+    //send the process to schedular using the message queue
+    message.mtype = 7;
+    message.process = *process;
+    int send_val = msgsnd(msgq_id, &message, sizeof(message), !IPC_NOWAIT);
+
+    if (send_val == -1)
+        perror("Errror in send");
+}
+
 
 int main(int argc, char * argv[])
 {
     signal(SIGINT, clearResources);
+
+    //intialize the message queue
+    intializeMessageQueue();
+
     // TODO Initialization
     // 1. Read the input files.
     struct Queue* processQueue = createQueue();
@@ -87,12 +115,16 @@ int main(int argc, char * argv[])
         char* args[] = {"./scheduler.o", str, NULL};
         execv(args[0], args);
     }
+
     // 4. Use this function after creating the clock process to initialize clock
-    sleep(1);
     initClk();
+
+
     // To get time use this
-    int clk = getClk();
-    printf("current time is %d\n", clk);
+    int clk;
+    // int clk = getClk();
+    // printf("current time is %d\n", clk);
+
 
     // TODO Generation Main Loop
     // 5. Create a data structure for processes and provide it with its parameters.
@@ -106,17 +138,18 @@ int main(int argc, char * argv[])
         while (process->arrivalTime != clk)
             clk = getClk();
         
-        printf("Process with id=%d arrived at %d\n", process->id, clk);
+        printf("Process with id = %d arrived at %d\n", process->id, clk);
+        
+        //put the process in the message queue
+        sendProcess(process);
+
         //send a signal to the schedular to be ready for the coming process
         kill(schedulerpid, SIGUSR1);
-
-        //send the process to the schedular
-        sendProcess(process);
 
         //remove it from the queue
         deQueue(processQueue);
     }
-    
+
     //wait for the schedular to finish before clearing the clock resources
     waitpid(schedulerpid, NULL, 0);
 
@@ -127,4 +160,7 @@ int main(int argc, char * argv[])
 void clearResources(int signum)
 {
     //TODO Clears all resources in case of interruption
+
+    //clear the message queue resources
+    msgctl(msgq_id, IPC_RMID, (struct msqid_ds *)0);
 }
