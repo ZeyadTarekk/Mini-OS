@@ -37,7 +37,8 @@ void readFile(struct Queue* processQueue) {
         p->quitQueue = 0;
         p->executionTime = 0;
         p->waitingTime = 0;
-        
+        p->pid = -1;
+
         enQueue(processQueue, p);
     }
     fclose(file);

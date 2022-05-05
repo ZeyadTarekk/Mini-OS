@@ -96,6 +96,9 @@ struct ProcessStruct
     // waitingTime = clk - enterQueue;
     int waitingTime;
 
+    // The real id of forked process
+    int pid;
+
 };
 
 
