@@ -15,8 +15,9 @@ typedef short bool;
 #define true 1
 #define false 0
 
+//keys for ftok function
 #define SHKEY 300
-
+#define PROSCH 65
 
 ///==============================
 //don't mess with this variable//
@@ -98,6 +99,19 @@ struct ProcessStruct
 };
 
 
+/*
+Messages Type:
+==============
+7 -> process from process_generator to schedular
+*/
+struct msgbuff
+{
+    long mtype;
+    // char mtext[70];
+    struct ProcessStruct process;
+};
+
+
 // Normal Queue
 struct QNode {
     struct ProcessStruct* data;
@@ -151,7 +165,7 @@ struct ProcessStruct* peekN(struct Queue* q)
 // Function to remove a key from given queue q
 void deQueue(struct Queue* q)
 {
-    // If queue is empty, return NULL.
+    // If queue is empty, return.
     if (q->front == NULL)
         return;
     
@@ -168,7 +182,7 @@ void deQueue(struct Queue* q)
 }
 
 // Function to check is list is empty
-int isEmptyN(struct Queue* q)
+bool isEmptyN(struct Queue* q)
 {
     return q->front == NULL;
 }
@@ -279,7 +293,7 @@ void push(struct PQueue* q, struct ProcessStruct* d, int p)
 }
 
 // Function to check is list is empty
-int isEmpty(struct PQueue* q)
+bool isEmpty(struct PQueue* q)
 {
     return q->head == NULL;
 }
