@@ -85,7 +85,7 @@ void __SRTN_save_enter_queue_state(struct ProcessStruct *const process_to_stop) 
      *      3- enterQueue
      *      4- executionTime
      */
-    process_to_stop->running = 1;
+    process_to_stop->running = 0;
     process_to_stop->startedBefore = 1;
     process_to_stop->enterQueue = current_time;
     process_to_stop->executionTime += current_time - process_to_stop->quitQueue;
