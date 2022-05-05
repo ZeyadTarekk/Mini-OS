@@ -1,0 +1,4 @@
+#id arrival runtime priority
+1	2	20	0
+2	6	23	2
+3	10	26	0
