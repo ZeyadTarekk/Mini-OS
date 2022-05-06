@@ -155,7 +155,7 @@ void __SRTN_save_enter_queue_state(struct ProcessStruct *const process_to_stop) 
     process_to_stop->startedBefore = 1;
     process_to_stop->enterQueue = current_time;
     process_to_stop->executionTime += current_time - process_to_stop->quitQueue;
-    assert(process_to_stop->executionTime > 0);
+    assert(process_to_stop->executionTime >= 0);
 }
 
 void __SRTN_save_exit_queue_state(struct ProcessStruct *const process_to_run) {
@@ -177,7 +177,10 @@ void __SRTN_save_exit_queue_state(struct ProcessStruct *const process_to_run) {
     process_to_run->running = 1;
     process_to_run->quitQueue = current_time;
     process_to_run->waitingTime += current_time - process_to_run->enterQueue;
-    assert(process_to_run->waitingTime > 0);
+    printf("current time : %d Wait time : %d enter queue time: %d \n", current_time, process_to_run->waitingTime,
+           process_to_run->enterQueue);
+    fflush(stdout);
+    assert(process_to_run->waitingTime >= 0);
 }
 
 int __SRTN_get_remaining_time(const struct ProcessStruct *const process) {
@@ -226,8 +229,8 @@ void SRTN(struct PQueue *priority_queue) {
         // DONE: Check if the queue is empty
         if (isEmpty(priority_queue)) {
             // TODO: Comment these two line after testing
-            printf("Queue is empty\n");
-            break;
+//            printf("Queue is empty\n");
+//            break;
             continue;
         }
 
