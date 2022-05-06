@@ -103,7 +103,7 @@ int main(int argc, char * argv[])
     int clkpid = fork();
     if (clkpid == 0) {
         //run the clk file
-        char* args[] = {"./clk.o", NULL};
+        char* args[] = {"./clk.out", NULL};
         execv(args[0], args);
     }
 
@@ -113,7 +113,7 @@ int main(int argc, char * argv[])
         int length = snprintf( NULL, 0, "%d", algorithm );
         char* str = malloc( length + 1 );
         snprintf( str, length + 1, "%d", algorithm );
-        char* args[] = {"./scheduler.o", str, NULL};
+        char* args[] = {"./scheduler.out", str, NULL};
         execv(args[0], args);
     }
 
