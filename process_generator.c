@@ -12,11 +12,10 @@ int msgq_id;
 struct msgbuff message;
 
 
-
 void clearResources(int);
 
-void readFile(struct Queue* processQueue) {
-    FILE * file = fopen("processes.txt", "r");
+void readFile(struct Queue *processQueue) {
+    FILE *file = fopen("processes.txt", "r");
 
     int id, arrivaltime, runningtime, priority;
     //read the first line (commented one)
@@ -24,9 +23,8 @@ void readFile(struct Queue* processQueue) {
     fgets(s, 30, file);
 
     //start reading the file
-    while (fscanf(file, "%d\t%d\t%d\t%d", &id, &arrivaltime, &runningtime, &priority) != EOF)
-    {
-        struct ProcessStruct* p = (struct ProcessStruct*)malloc(sizeof(struct ProcessStruct));
+    while (fscanf(file, "%d\t%d\t%d\t%d", &id, &arrivaltime, &runningtime, &priority) != EOF) {
+        struct ProcessStruct *p = (struct ProcessStruct *) malloc(sizeof(struct ProcessStruct));
         p->id = id;
         p->arrivalTime = arrivaltime;
         p->priority = priority;
@@ -53,12 +51,11 @@ int getSchedulingAlgorithm() {
     printf("[3] Round Robin (RR)\n");
     printf("=======================================\n");
     scanf("%d", &algorithm);
-    while (algorithm > 3 || algorithm < 1)
-    {
+    while (algorithm > 3 || algorithm < 1) {
         printf("Enter a number from 1 to 3\n");
         scanf("%d", &algorithm);
     }
-    
+
     return algorithm;
 }
 
@@ -66,26 +63,24 @@ void intializeMessageQueue() {
     key_t key_id = ftok("keyfile", PROSCH);
     msgq_id = msgget(key_id, 0666 | IPC_CREAT);
 
-    if (msgq_id == -1)
-    {
+    if (msgq_id == -1) {
         perror("Error in create message queue");
         exit(-1);
     }
 }
 
-void sendProcess(struct ProcessStruct* process) {
+void sendProcess(struct ProcessStruct *process) {
     //send the process to schedular using the message queue
     message.mtype = 7;
     message.process = *process;
-    int send_val = msgsnd(msgq_id, &message, sizeof(message), !IPC_NOWAIT);
-
+    int send_val = msgsnd(msgq_id, &message, sizeof(message.process), !IPC_NOWAIT);
+    printf("message sent: %d\n", message.process.id);
     if (send_val == -1)
         perror("Errror in send");
 }
 
 
-int main(int argc, char * argv[])
-{
+int main(int argc, char *argv[]) {
     signal(SIGINT, clearResources);
 
     //intialize the message queue
@@ -93,7 +88,7 @@ int main(int argc, char * argv[])
 
     // TODO Initialization
     // 1. Read the input files.
-    struct Queue* processQueue = createQueue();
+    struct Queue *processQueue = createQueue();
     readFile(processQueue);
 
     // 2. Ask the user for the chosen scheduling algorithm and its parameters, if there are any.
@@ -103,17 +98,17 @@ int main(int argc, char * argv[])
     int clkpid = fork();
     if (clkpid == 0) {
         //run the clk file
-        char* args[] = {"./clk.out", NULL};
+        char *args[] = {"./clk.out", NULL};
         execv(args[0], args);
     }
 
     int schedulerpid = fork();
     if (schedulerpid == 0) {
         //run the scheduler file
-        int length = snprintf( NULL, 0, "%d", algorithm );
-        char* str = malloc( length + 1 );
-        snprintf( str, length + 1, "%d", algorithm );
-        char* args[] = {"./scheduler.out", str, NULL};
+        int length = snprintf(NULL, 0, "%d", algorithm);
+        char *str = malloc(length + 1);
+        snprintf(str, length + 1, "%d", algorithm);
+        char *args[] = {"./scheduler.out", str, NULL};
         execv(args[0], args);
     }
 
@@ -130,17 +125,16 @@ int main(int argc, char * argv[])
     // TODO Generation Main Loop
     // 5. Create a data structure for processes and provide it with its parameters.
     // 6. Send the information to the scheduler at the appropriate time.
-    while (!isEmptyN(processQueue))
-    {
-        struct ProcessStruct* process = peekN(processQueue);
+    while (!isEmptyN(processQueue)) {
+        struct ProcessStruct *process = peekN(processQueue);
 
         //get the current time to check with the arrival time of the process
         clk = getClk();
         while (process->arrivalTime != clk)
             clk = getClk();
-        
+
         printf("Process with id = %d arrived at %d\n", process->id, clk);
-        
+
         //put the process in the message queue
         sendProcess(process);
 
@@ -158,10 +152,9 @@ int main(int argc, char * argv[])
     destroyClk(true);
 }
 
-void clearResources(int signum)
-{
+void clearResources(int signum) {
     //TODO Clears all resources in case of interruption
 
     //clear the message queue resources
-    msgctl(msgq_id, IPC_RMID, (struct msqid_ds *)0);
+    msgctl(msgq_id, IPC_RMID, (struct msqid_ds *) 0);
 }
