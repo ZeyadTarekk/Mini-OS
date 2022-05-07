@@ -60,8 +60,7 @@ int getSchedulingAlgorithm() {
 }
 
 void intializeMessageQueue() {
-    key_t key_id = ftok("keyfile", PROSCH);
-    msgq_id = msgget(key_id, 0666 | IPC_CREAT);
+    msgq_id = msgget(PROSCH, 0666 | IPC_CREAT);
 
     if (msgq_id == -1) {
         perror("Error in create message queue");
