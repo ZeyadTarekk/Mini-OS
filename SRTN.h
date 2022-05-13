@@ -131,7 +131,7 @@ void __SRTN_stop(const struct ProcessStruct *const process_to_stop) {
      * INPUT type  : const struct ProcessStruct *const
      * OUTPUT      : void
      * NOTE        : Send Signal SIGUSR1 for the process
-     * TODO        : Make sure that the one who makes the handler in file process uses the same signal as you
+     * DONE        : Make sure that the one who makes the handler in file process uses the same signal as you
      * */
     printf("\n=Stopping:");
     printf("\n Current time = %d\n", getClk());
@@ -245,12 +245,10 @@ __SRTN_compare_remaining_time(const struct ProcessStruct *const process1, const 
     return process1_remaining_time < process2_remaining_time;
 }
 
-// TODO: remove this parameter after testing
-
 void SRTN(struct PQueue *priority_queue) {
 
     // Set SIGUSR2 handler to handle the process that has finished execution
-    // TODO : Make sure that the one who sends the signal in file process uses the same signal as you
+    // DONE : Make sure that the one who sends the signal in file process uses the same signal as you
     signal(SIGUSR2, __SRTN_process_finish_handler);
 
     /*TODO: There still processes in the Queue or there still processes will be received*/

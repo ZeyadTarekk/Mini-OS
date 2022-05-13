@@ -1,4 +1,4 @@
-//for testing
+//TODO: Remove this flag after creating end shared memory for testing
 int flag = 1;
 
 #include "SRTN.h"
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
     initClk();
 
 
-    //intialize the message queue
+    //initialize the message queue
     intializeMessageQueue();
 
 
@@ -85,6 +85,10 @@ int main(int argc, char *argv[]) {
 
     printf("\n\n===================================scheduler Terminated at time = %d===================================\n\n",
            getClk());
+
+    // TODO: Check its logic
+    // Destroy your clock
+    destroyClk(true);
     return 0;
 }
 
@@ -127,6 +131,7 @@ void getProcess(int signum) {
     // This is only for testing
     // Until we make a shared memory for terminating
     // Use the flag as a condition of your main loop
+    //TODO: Remove this condition after creating end shared memory for testing
     if (message.process.id == 11) {
         flag = 0;
     }
