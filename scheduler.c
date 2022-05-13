@@ -1,4 +1,6 @@
-//#include "headers.h"
+//for testing
+int flag = 1;
+
 #include "SRTN.h"
 
 // global variables
@@ -38,12 +40,8 @@ void intializeMessageQueue() {
     }
 }
 
-//for testing
-bool flag = true;
-
 
 int main(int argc, char *argv[]) {
-    FILE *fb = freopen("__OUTSRTN2.txt", "w", stdout);
 
     //add signal handler to get the processes from process_generator
     signal(SIGUSR1, getProcess);
@@ -84,14 +82,9 @@ int main(int argc, char *argv[]) {
 
             break;
     }
-    while (flag) {
 
-    };
-
-    //upon termination release the clock resources.
-    destroyClk(false);
-
-    fclose(fb);
+    printf("\n\n===================================scheduler Terminated at time = %d===================================\n\n",
+           getClk());
     return 0;
 }
 
@@ -115,7 +108,7 @@ void getProcess(int signum) {
         perror("Error in receive");
     }
     // For testing only
-    __SRTN_print_process_info(&message.process);
+    //__SRTN_print_process_info(&message.process);
     switch (algorithm) {
         case 1:
             // TODO: Add to [PRIORITY QUEUE] as HPF
@@ -129,8 +122,12 @@ void getProcess(int signum) {
 
             break;
     }
-    if (message.process.id == 3) {
-//        exit(0);
-        flag = false;
+
+    // message.process.id == <id of last process> => Last process is not valid
+    // This is only for testing
+    // Until we make a shared memory for terminating
+    // Use the flag as a condition of your main loop
+    if (message.process.id == 11) {
+        flag = 0;
     }
 }
