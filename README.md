@@ -5,7 +5,7 @@
 ### In scheduler
 
 * There is a variable called flag this flag is used to terminate the scheduler
-* This flag is one until a process of a given id is sent to the scheduler (currently it's 11)
+* This flag is one until a process of a given id is sent to the scheduler (currently it's -1)
 * So make the last process id -1 (this process is ignored : dummy process) or specify your id and modify process.txt
   file
 * note that this dummy process has to have an arrival time greater than the sum of all running time of all process in
