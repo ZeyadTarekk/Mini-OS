@@ -22,8 +22,7 @@ int main(int agrc, char *argv[]) {
             remainingtime--;
             previous_time = current_time;
             // TODO: TESTING (Comment)
-            printf("Remaining time is %d\nPrevious time is %d \ncurrent time is %d\n", remainingtime, previous_time,
-                   current_time);
+            printf("Remaining time is %d\n", remainingtime);
         }
 
     }
