@@ -19,23 +19,26 @@ void __SRTN_process_finish_handler(int);
 
 struct ProcessStruct *__running_process = NULL;
 
-int __SRTN_get_the_clock() {
-    return *shmaddr;
-}
+long long __number_of_finished_processes = 0;
 
 void __SRTN_print_process_info(const struct ProcessStruct *const process) {
+    if (process == NULL) {
+        printf("\n****************************\nNULL Error in __SRTN_print_process_info\n****************************\n");
+        exit(0);
+    }
     printf("\n*********************************************\n");
     printf("id                : %d\n", process->id);
     printf("arrivalTime       : %d\n", process->arrivalTime);
     printf("priority          : %d\n", process->priority);
     printf("runtime           : %d\n", process->runTime);
-    printf("running           : %d\n", process->running);
-    printf("startedBefore     : %d\n", process->startedBefore);
-    printf("enterQueue        : %d\n", process->enterQueue);
-    printf("quitQueue         : %d\n", process->quitQueue);
-    printf("waitingTime       : %d\n", process->waitingTime);
+//    printf("running           : %d\n", process->running);
+//    printf("startedBefore     : %d\n", process->startedBefore);
+//    printf("enterQueue        : %d\n", process->enterQueue);
+//    printf("quitQueue         : %d\n", process->quitQueue);
+//    printf("waitingTime       : %d\n", process->waitingTime);
     printf("pid               : %d\n", process->pid);
     printf("*********************************************\n");
+    fflush(stdout);
 }
 
 void __SRTN_process_finish_handler(int signum) {
@@ -45,15 +48,21 @@ void __SRTN_process_finish_handler(int signum) {
      * OUTPUT      : void
      * NOTE        : Handles the process that finishes execution
      * */
+    __number_of_finished_processes++;
     printf("Process %d has sent me a signal %d\nWhich means it has finished execution\n", __running_process->pid,
            signum);
-
+    printf("Number of finished processes is %lld \n", __number_of_finished_processes);
+    printf("Current clock is : %d \n", getClk());
     // DONE: set __running_process to NULL
     __running_process = NULL;
 }
 
 void __SRTN_run(struct ProcessStruct *const process_to_run) {
 
+    if (process_to_run == NULL) {
+        printf("\n****************************\nNULL Error in __SRTN_run\n****************************\n");
+        exit(0);
+    }
     /*
      * INPUT       : process you want to run
      * INPUT type  : struct ProcessStruct *const
@@ -64,7 +73,7 @@ void __SRTN_run(struct ProcessStruct *const process_to_run) {
      * */
     //DONE: Check boolean of <startedBefore>
     if (process_to_run->startedBefore == 1) {
-        printf("Signal continue has been sent to the process\n");
+        printf("Signal continue has been sent to the process %d\n", process_to_run->pid);
 
         // DONE: Send a continue signal to the process using its pid in the struct
         kill(process_to_run->pid, SIGCONT);
@@ -108,11 +117,15 @@ void __SRTN_run(struct ProcessStruct *const process_to_run) {
     __running_process = process_to_run;
 
     printf("\n=Running:");
-    printf("\n Current time = %d", __SRTN_get_the_clock());
+    printf("\n Current time = %d", getClk());
     __SRTN_print_process_info(process_to_run);
 }
 
 void __SRTN_stop(const struct ProcessStruct *const process_to_stop) {
+    if (process_to_stop == NULL) {
+        printf("\n****************************\nNULL Error in __SRTN_stop\n****************************\n");
+        exit(0);
+    }
     /*
      * INPUT       : The process that you want to stop
      * INPUT type  : const struct ProcessStruct *const
@@ -121,7 +134,8 @@ void __SRTN_stop(const struct ProcessStruct *const process_to_stop) {
      * TODO        : Make sure that the one who makes the handler in file process uses the same signal as you
      * */
     printf("\n=Stopping:");
-    printf("\n Current time = %d", __SRTN_get_the_clock());
+    printf("\n Current time = %d\n", getClk());
+    printf("Signal Stop has been sent to the process %d\n", process_to_stop->pid);
     __SRTN_print_process_info(process_to_stop);
 
     // DONE: Send signal to process (stop the process)
@@ -134,13 +148,17 @@ void __SRTN_stop(const struct ProcessStruct *const process_to_stop) {
 // NOTE: If save functions have the same logic in all algorithms then there no need to implement it
 
 void __SRTN_save_enter_queue_state(struct ProcessStruct *const process_to_stop) {
+    if (process_to_stop == NULL) {
+        printf("\n****************************\nNULL Error in __SRTN_save_enter_queue_state\n****************************\n");
+        exit(0);
+    }
     /*
      * INPUT       : The process that has entered the queue
      * INPUT type  : const struct ProcessStruct *
      * OUTPUT      : void
      * NOTE        : This function saves the state of the process ON ENTERING the ready queue
      * */
-    int current_time = __SRTN_get_the_clock();
+    int current_time = getClk();
     printf("\n=Entered Queue:");
     printf("\n Current time = %d", current_time);
     __SRTN_print_process_info(process_to_stop);
@@ -159,13 +177,17 @@ void __SRTN_save_enter_queue_state(struct ProcessStruct *const process_to_stop) 
 }
 
 void __SRTN_save_exit_queue_state(struct ProcessStruct *const process_to_run) {
+    if (process_to_run == NULL) {
+        printf("\n****************************\nNULL Error in __SRTN_save_exit_queue_state\n****************************\n");
+        exit(0);
+    }
     /*
      * INPUT       : The process that has left the queue
      * INPUT type  : const struct ProcessStruct *
      * OUTPUT      : void
      * NOTE        : This function saves the state of the process ON LEAVING the ready queue
      * */
-    int current_time = __SRTN_get_the_clock();
+    int current_time = getClk();
     printf("\n=Left Queue:");
     printf("\n Current time = %d", current_time);
     __SRTN_print_process_info(process_to_run);
@@ -179,11 +201,14 @@ void __SRTN_save_exit_queue_state(struct ProcessStruct *const process_to_run) {
     process_to_run->waitingTime += current_time - process_to_run->enterQueue;
     printf("current time : %d Wait time : %d enter queue time: %d \n", current_time, process_to_run->waitingTime,
            process_to_run->enterQueue);
-    fflush(stdout);
     assert(process_to_run->waitingTime >= 0);
 }
 
 int __SRTN_get_remaining_time(const struct ProcessStruct *const process) {
+    if (process == NULL) {
+        printf("\n****************************\nNULL Error in __SRTN_get_remaining_time\n****************************\n");
+        exit(0);
+    }
     /*
      * INPUT       : The process to calculate its remaining time
      * INPUT type  : const struct ProcessStruct *const
@@ -202,6 +227,10 @@ int __SRTN_get_remaining_time(const struct ProcessStruct *const process) {
 
 int
 __SRTN_compare_remaining_time(const struct ProcessStruct *const process1, const struct ProcessStruct *const process2) {
+    if (process1 == NULL || process2 == NULL) {
+        printf("\n****************************\nNULL Error in __SRTN_compare_remaining_time\n****************************\n");
+        exit(0);
+    }
     /*
      * INPUT       : Two processes to compare there remaining time
      *               process1 type: const struct ProcessStruct *const
@@ -224,13 +253,11 @@ void SRTN(struct PQueue *priority_queue) {
     // TODO : Make sure that the one who sends the signal in file process uses the same signal as you
     signal(SIGUSR2, __SRTN_process_finish_handler);
 
-    while (1/*TODO: There still processes in the Queue or there still processes will be received*/) {
+    /*TODO: There still processes in the Queue or there still processes will be received*/
+    while (flag) {
 
         // DONE: Check if the queue is empty
         if (isEmpty(priority_queue)) {
-            // TODO: Comment these two line after testing
-//            printf("Queue is empty\n");
-//            break;
             continue;
         }
 
@@ -249,18 +276,21 @@ void SRTN(struct PQueue *priority_queue) {
             // DONE: Run the process                        => Run process function
             __SRTN_run(top_queue);
 
-        } else if (__SRTN_compare_remaining_time(top_queue, __running_process)) {
+        } else if (__SRTN_compare_remaining_time(top_queue, __running_process) && __running_process != NULL) {
             // IF THE FIRST PROCESS IN THE READY QUEUE HAS SMALLER REMAINING TIME
 
             /**** STEPS TO STOP THE RUNNING PROCESS ****/
+            // DONE: Save running process before making it NULL in __SRTN_stop
+
+            struct ProcessStruct *store_running_process = __running_process;
             // DONE: Stop the running process               => Signal
             __SRTN_stop(__running_process);
 
             // DONE: Save the state of the running process  => Save state function  <__SRTN_save_enter_queue_state>
-            __SRTN_save_enter_queue_state(__running_process);
+            __SRTN_save_enter_queue_state(store_running_process);
 
             // DONE: Add the running process to the queue
-            push(priority_queue, __running_process, __SRTN_get_remaining_time(__running_process));
+            push(priority_queue, store_running_process, __SRTN_get_remaining_time(store_running_process));
 
 
             /**** STEPS TO RUN THE TOP PROCESS ****/
@@ -274,5 +304,6 @@ void SRTN(struct PQueue *priority_queue) {
             __SRTN_run(top_queue);
         }
     }
-    sleep(2);
+    printf("\n\n===================================SRTN Terminated flag = %d at time = %d===================================\n\n",
+           flag, getClk());
 }
