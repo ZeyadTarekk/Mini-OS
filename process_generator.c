@@ -9,6 +9,7 @@ RR --> 3
 
 // global variables
 int msgq_id;
+int scheduler_pGenerator_sem;
 struct msgbuff message;
 
 
@@ -68,19 +69,47 @@ void intializeMessageQueue() {
     }
 }
 
+void initializeSemaphore() {
+    key_t semkey = ftok("sem.txt", 70);
+
+    // Create a semaphore to synchronize the scheduler with process generator
+    scheduler_pGenerator_sem = semget(semkey, 1, 0666 | IPC_CREAT);
+
+    // Check is semaphore id is -1
+    if (scheduler_pGenerator_sem == -1) {
+        perror("Error in creating semaphores");
+        exit(-1);
+    }
+
+    printf("Semaphore created with id: %d\n",scheduler_pGenerator_sem);
+
+    // Initialize the semaphore
+    union Semun semun;
+    semun.val = 0;
+    if (semctl(scheduler_pGenerator_sem, 0, SETVAL, semun) == -1) {
+        perror("Error in internalizing scheduler_pGenerator_sem");
+        exit(-1);
+    }
+}
+
 void sendProcess(struct ProcessStruct *process) {
     //send the process to schedular using the message queue
     message.mtype = 7;
     message.process = *process;
     int send_val = msgsnd(msgq_id, &message, sizeof(message.process), !IPC_NOWAIT);
+
     printf("message sent: %d\n", message.process.id);
     if (send_val == -1)
         perror("Errror in send");
+
 }
 
 
 int main(int argc, char *argv[]) {
     signal(SIGINT, clearResources);
+
+    // Initialize the semaphore
+    initializeSemaphore();
 
     //intialize the message queue
     intializeMessageQueue();
@@ -139,6 +168,9 @@ int main(int argc, char *argv[]) {
 
         //send a signal to the schedular to be ready for the coming process
         kill(schedulerpid, SIGUSR1);
+
+        // Down the semaphore to make sure that the scheduler has pushed the process to the queue
+        down(scheduler_pGenerator_sem);
 
         //remove it from the queue
         deQueue(processQueue);

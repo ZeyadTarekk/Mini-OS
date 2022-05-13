@@ -6,11 +6,14 @@ int flag = 1;
 // global variables
 int msgq_id;
 int algorithm;
+int scheduler_pGenerator_sem;
 struct msgbuff message;
 struct PQueue *priority_queue;
 struct Queue *queue;
 
 void getProcess(int);
+
+void printQueue(int);
 
 struct ProcessStruct *create_process
         (int id, int arrivalTime, int priority, int runTime,
@@ -40,16 +43,33 @@ void intializeMessageQueue() {
     }
 }
 
+void initializeSemaphore() {
+
+    key_t semkey = ftok("sem.txt", 70);
+
+    // Create a semaphore to synchronize the scheduler with process generator
+    scheduler_pGenerator_sem = semget(semkey, 1, 0666 | IPC_CREAT);
+
+    // Check is semaphore id is -1
+    if (scheduler_pGenerator_sem == -1) {
+        perror("Error in creating semaphores");
+        exit(-1);
+    }
+    printf("Scheduler: Semaphore created with id: %d\n", scheduler_pGenerator_sem);
+}
 
 int main(int argc, char *argv[]) {
 
     //add signal handler to get the processes from process_generator
     signal(SIGUSR1, getProcess);
+    signal(SIGTRAP, printQueue);
 
 
     //TODO implement the scheduler :)
     initClk();
 
+    //Initialize the semaphore
+    initializeSemaphore();
 
     //initialize the message queue
     intializeMessageQueue();
@@ -127,12 +147,25 @@ void getProcess(int signum) {
             break;
     }
 
+    // Process has been pushed to the queue
+    // Up the semaphore to allow process generator to continue
+    up(scheduler_pGenerator_sem);
+
     // message.process.id == <id of last process> => Last process is not valid
     // This is only for testing
     // Until we make a shared memory for terminating
     // Use the flag as a condition of your main loop
     //TODO: Remove this condition after creating end shared memory for testing
-    if (message.process.id == 11) {
+    if (message.process.id == -1) {
         flag = 0;
+    }
+}
+
+void printQueue(int sigNum) {
+    printf("I have recieved signal %d\n", sigNum);
+    struct PQNode *start = priority_queue->head;
+    while (start != NULL) {
+        __SRTN_print_process_info(start->data);
+        start = start->next;
     }
 }
