@@ -147,8 +147,14 @@ int main(int argc, char *argv[]) {
     //wait for the schedular to finish before clearing the clock resources
     waitpid(schedulerpid, NULL, 0);
 
+    printf("==================Process generator terminated======================\n");
+
     // 7. Clear clock resources
     destroyClk(true);
+
+    // Clear resources after finishing
+    // 0 is dummy
+    clearResources(0);
 }
 
 void clearResources(int signum) {
