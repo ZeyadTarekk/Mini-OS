@@ -1,5 +1,6 @@
 #include "headers.h"
 #include <assert.h>
+#include "limits.h"
 
 void __SRTN_print_process_info(const struct ProcessStruct *const);
 
@@ -31,12 +32,14 @@ void __SRTN_print_process_info(const struct ProcessStruct *const process) {
     printf("arrivalTime       : %d\n", process->arrivalTime);
     printf("priority          : %d\n", process->priority);
     printf("runtime           : %d\n", process->runTime);
-//    printf("running           : %d\n", process->running);
-//    printf("startedBefore     : %d\n", process->startedBefore);
-//    printf("enterQueue        : %d\n", process->enterQueue);
-//    printf("quitQueue         : %d\n", process->quitQueue);
-//    printf("waitingTime       : %d\n", process->waitingTime);
+    printf("running           : %d\n", process->running);
+    printf("startedBefore     : %d\n", process->startedBefore);
+    printf("enterQueue        : %d\n", process->enterQueue);
+    printf("quitQueue         : %d\n", process->quitQueue);
+    printf("waitingTime       : %d\n", process->waitingTime);
+    printf("executionTime     : %d\n", process->executionTime);
     printf("pid               : %d\n", process->pid);
+    printf("remaining time    : %d\n", __SRTN_get_remaining_time(process));
     printf("*********************************************\n");
     fflush(stdout);
 }
@@ -72,46 +75,49 @@ void __SRTN_run(struct ProcessStruct *const process_to_run) {
      *                  2- Fork the process if it hasn't started before
      * */
     //DONE: Check boolean of <startedBefore>
-    if (process_to_run->startedBefore == 1) {
-        printf("Signal continue has been sent to the process %d\n", process_to_run->pid);
+//    if (process_to_run->startedBefore == 1) {
+//        printf("Signal continue has been sent to the process %d\n", process_to_run->pid);
+//
+//        // DONE: Send a continue signal to the process using its pid in the struct
+//        int killResult = kill(process_to_run->pid, SIGCONT);
+//        if(killResult == -1){
+//            printf("Error in sending signal continue\n");
+//            exit(-1);        }
+//
+//    } else {
+    // Create new process
+    int pid = fork();
 
-        // DONE: Send a continue signal to the process using its pid in the struct
-        kill(process_to_run->pid, SIGCONT);
+    // Handling forking error
+    if (pid == -1) {
+        perror("Error in execl");
+        exit(-1);
+    }
 
-    } else {
-        // Create new process
-        int pid = fork();
+    // Child
+    // WARNING: DON'T HANDLE ANY IMPORTANT INFORMATION INT PID == 0
+    if (pid == 0) {
 
-        // Handling forking error
-        if (pid == -1) {
+        printf("A process created with pid = %d \n", getpid());
+
+        // Convert the remaining time to string
+        char remaining_time_str[20];
+        sprintf(remaining_time_str, "%d", __SRTN_get_remaining_time(process_to_run));
+
+        // Use execvp to replace the image of the child with that of the process file
+        char *args[] = {"./process.out", remaining_time_str, NULL};
+        int execlResult = execvp(args[0], args);
+
+        // Handling execvp error
+        if (execlResult == -1) {
             perror("Error in execl");
             exit(-1);
         }
-
-        // Child
-        // WARNING: DON'T HANDLE ANY IMPORTANT INFORMATION INT PID == 0
-        if (pid == 0) {
-
-            printf("A process created with pid = %d \n", getpid());
-
-            // Convert the remaining time to string
-            char remaining_time_str[20];
-            sprintf(remaining_time_str, "%d", __SRTN_get_remaining_time(process_to_run));
-
-            // Use execvp to replace the image of the child with that of the process file
-            char *args[] = {"./process.out", remaining_time_str, NULL};
-            int execlResult = execvp(args[0], args);
-
-            // Handling execvp error
-            if (execlResult == -1) {
-                perror("Error in execl");
-                exit(-1);
-            }
-        }
-
-        // DONE: Save pid in the struct
-        process_to_run->pid = pid;
     }
+
+    // DONE: Save pid in the struct
+    process_to_run->pid = pid;
+//    }
 
     // DONE: Save it in the <__running_process> pointer
     __running_process = process_to_run;
@@ -123,6 +129,7 @@ void __SRTN_run(struct ProcessStruct *const process_to_run) {
 
 void __SRTN_stop(const struct ProcessStruct *const process_to_stop) {
     if (process_to_stop == NULL) {
+        return;
         printf("\n****************************\nNULL Error in __SRTN_stop\n****************************\n");
         exit(0);
     }
@@ -139,8 +146,11 @@ void __SRTN_stop(const struct ProcessStruct *const process_to_stop) {
     __SRTN_print_process_info(process_to_stop);
 
     // DONE: Send signal to process (stop the process)
-    kill(process_to_stop->pid, SIGTSTP);
-
+    int killResult = kill(process_to_stop->pid, SIGKILL);
+    if (killResult == -1) {
+        printf("Error in sending signal stop\n");
+        exit(-1);
+    }
     // DONE: Set the <__running_process> to NULL  __running_process = NULL;
     __running_process = NULL;
 }
@@ -206,6 +216,7 @@ void __SRTN_save_exit_queue_state(struct ProcessStruct *const process_to_run) {
 
 int __SRTN_get_remaining_time(const struct ProcessStruct *const process) {
     if (process == NULL) {
+        return INT_MIN;
         printf("\n****************************\nNULL Error in __SRTN_get_remaining_time\n****************************\n");
         exit(0);
     }
@@ -227,10 +238,14 @@ int __SRTN_get_remaining_time(const struct ProcessStruct *const process) {
 
 int
 __SRTN_compare_remaining_time(const struct ProcessStruct *const process1, const struct ProcessStruct *const process2) {
-    if (process1 == NULL || process2 == NULL) {
-        printf("\n****************************\nNULL Error in __SRTN_compare_remaining_time\n****************************\n");
+    if (process2 == NULL) {
+        return 0;
         exit(0);
     }
+//    if (process1 == NULL || process2 == NULL) {
+//        printf("\n****************************\nNULL Error in __SRTN_compare_remaining_time\n****************************\n");
+//        exit(0);
+//    }
     /*
      * INPUT       : Two processes to compare there remaining time
      *               process1 type: const struct ProcessStruct *const
@@ -251,6 +266,7 @@ void SRTN(struct PQueue *priority_queue) {
     // DONE : Make sure that the one who sends the signal in file process uses the same signal as you
     signal(SIGUSR2, __SRTN_process_finish_handler);
 
+    int lastPid = -1;
     /*TODO: There still processes in the Queue or there still processes will be received*/
     while (flag) {
 
@@ -274,9 +290,9 @@ void SRTN(struct PQueue *priority_queue) {
             // DONE: Run the process                        => Run process function
             __SRTN_run(top_queue);
 
-        } else if (__SRTN_compare_remaining_time(top_queue, __running_process) && __running_process != NULL) {
+        } else if (top_queue->id != lastPid && __SRTN_compare_remaining_time(top_queue, __running_process)) {
             // IF THE FIRST PROCESS IN THE READY QUEUE HAS SMALLER REMAINING TIME
-
+            lastPid = top_queue->id;
             /**** STEPS TO STOP THE RUNNING PROCESS ****/
             // DONE: Save running process before making it NULL in __SRTN_stop
 
