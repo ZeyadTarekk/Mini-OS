@@ -6,6 +6,8 @@ int flag = 1;
 void print_process_info(const struct ProcessStruct *const, int);
 
 #include "SRTN.h"
+#include "RR.h"
+#include "HPF.c"
 
 // global variables
 int msgq_id;
@@ -90,8 +92,7 @@ int main(int argc, char *argv[]) {
         case 1:
             // Allocate the priority queue
             priority_queue = createPriorityQueue();
-
-            // TODO: Add your algorithm call here (HPF)
+            HPF(priority_queue);
 
             break;
         case 2:
@@ -105,9 +106,8 @@ int main(int argc, char *argv[]) {
         case 3:
             // Allocate the queue
             queue = createQueue();
-
-            // TODO: Add your algorithm call here (RR)
-
+            // Call the algorithm function
+            RR(3, queue);
             break;
     }
 
@@ -127,7 +127,27 @@ void add_to_SRTN_queue(struct ProcessStruct process) {
                                                       process.startedBefore, process.enterQueue, process.quitQueue,
                                                       process.executionTime,
                                                       process.waitingTime, process.pid);
-    push(priority_queue, newProcess, newProcess->runTime);
+    push(priority_queue, newProcess, newProcess->priority);
+}
+
+void add_to_HPF_queue(struct ProcessStruct process) {
+    // Push to the queue and the priority is the priority (The priority of the process)
+    struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
+                                                      process.runTime, process.running,
+                                                      process.startedBefore, process.enterQueue, process.quitQueue,
+                                                      process.executionTime,
+                                                      process.waitingTime, process.pid);
+    push(priority_queue, newProcess, newProcess->priority);
+}
+
+void add_to_RR_queue(struct ProcessStruct process) {
+    // enqueue (The remaining time at the beginning)
+    struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
+                                                      process.runTime, process.running,
+                                                      process.startedBefore, process.enterQueue, process.quitQueue,
+                                                      process.executionTime,
+                                                      process.waitingTime, process.pid);
+    enQueue(queue, newProcess);
 }
 
 void getProcess(int signum) {
@@ -144,14 +164,15 @@ void getProcess(int signum) {
     switch (algorithm) {
         case 1:
             // TODO: Add to [PRIORITY QUEUE] as HPF
-
+            add_to_HPF_queue(message.process);
             break;
         case 2:
             // DONE: Add to priority queue as SRTN
             add_to_SRTN_queue(message.process);
+            break;
         case 3:
             // TODO: Add to [QUEUE] as RR
-
+            add_to_RR_queue(message.process);
             break;
     }
 
