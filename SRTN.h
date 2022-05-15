@@ -1,4 +1,3 @@
-#include "headers.h"
 #include <assert.h>
 #include "limits.h"
 
@@ -17,6 +16,7 @@ int __SRTN_get_remaining_time(const struct ProcessStruct *const);
 int __SRTN_compare_remaining_time(const struct ProcessStruct *const, const struct ProcessStruct *const);
 
 void __SRTN_process_finish_handler(int);
+
 
 struct ProcessStruct *__running_process = NULL;
 
@@ -56,6 +56,13 @@ void __SRTN_process_finish_handler(int signum) {
            signum);
     printf("Number of finished processes is %lld \n", __number_of_finished_processes);
     printf("Current clock is : %d \n", getClk());
+
+    // Save enter queue state
+    __SRTN_save_enter_queue_state(__running_process);
+
+    // Log to file
+    print_process_info(__running_process, 3);
+
     // DONE: set __running_process to NULL
     __running_process = NULL;
 }
@@ -85,6 +92,14 @@ void __SRTN_run(struct ProcessStruct *const process_to_run) {
 //            exit(-1);        }
 //
 //    } else {
+
+    // DONE: Log to file
+    if (process_to_run->startedBefore == 1) {
+        print_process_info(process_to_run, 2);
+    } else {
+        print_process_info(process_to_run, 0);
+    }
+
     // Create new process
     int pid = fork();
 
@@ -151,6 +166,10 @@ void __SRTN_stop(const struct ProcessStruct *const process_to_stop) {
         printf("Error in sending signal stop\n");
         exit(-1);
     }
+
+    // DONE: Log to file
+    print_process_info(process_to_stop, 1);
+
     // DONE: Set the <__running_process> to NULL  __running_process = NULL;
     __running_process = NULL;
 }
@@ -231,7 +250,7 @@ int __SRTN_get_remaining_time(const struct ProcessStruct *const process) {
     int process_remaining_time = process->runTime - process->executionTime;
 
     // Assert that the remaining time is greater than ZERO
-    assert(process_remaining_time > 0);
+    assert(process_remaining_time >= 0);
 
     return process_remaining_time;
 }
