@@ -1,5 +1,4 @@
 #include <assert.h>
-#include "headers.h"
 
 void RR_run(struct ProcessStruct *const);
 
@@ -222,7 +221,7 @@ void RR(int quantum, struct Queue *queue) {
             continue;
 
         // get the turned process from the queue  before executing
-        struct ProcessStruct *turnedProcess = peek(queue);
+        struct ProcessStruct *turnedProcess = peekN(queue);
 
         //check if there is no  running process
         if (!running_process) {
