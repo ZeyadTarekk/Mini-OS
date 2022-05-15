@@ -1,8 +1,9 @@
 #include <assert.h>
 #include "headers.h"
-void print_RR_Info(const struct ProcessStruct *const);
 
 void RR_run(struct ProcessStruct *const);
+
+void print_RR_Info(const struct ProcessStruct *const);
 
 void RR_stop(const struct ProcessStruct *const);
 
@@ -12,18 +13,265 @@ void RR_save_exit_queue_state(struct ProcessStruct *const);
 
 int RR_get_remaining_time(const struct ProcessStruct *const);
 
-int RR_compare_remaining_time(const struct ProcessStruct *const, const struct ProcessStruct *const);
-int RR_get_Quantity_time(const int quanta)
-
 void RR_process_finish_handler(int);
 
-struct ProcessStruct *__running_process = NULL;
+struct ProcessStruct *running_process = NULL;
+
+// for testing till getting as a parameter in function
+//const int quantum = 3;
 
 int RR_get_the_clock() {
     return *shmaddr;
 }
 
-// TODO:
+void RR_run(struct ProcessStruct *const process) {
+
+    if (process == NULL) {
+        printf("\n****************************\nNULL Error in RR_run\n****************************\n");
+        exit(0);
+    }
+    int pid = fork();
+
+    // Handling forking error
+    if (pid == -1) {
+        perror("Error in forking");
+        exit(-1);
+    }
+
+    // Child
+    if (pid == 0) {
+
+        printf("A process created with pid = %d \n", getpid());
+
+        // Convert the remaining time to string
+        char remaining_time_str[20];
+        sprintf(remaining_time_str, "%d", RR_get_remaining_time(process));
+
+        // Use execvp to replace the image of the child with that of the process file
+        char *args[] = {"./process.out", remaining_time_str, NULL};
+        int execlResult = execvp(args[0], args);
+
+        // Handling execvp error
+        if (execlResult == -1) {
+            perror("Error in execl");
+            exit(-1);
+        }
+    }
+
+    process->pid = pid;
+
+    //Save it in the <running_process> pointer
+    running_process = process;
+
+    printf("\n=Running:");
+    printf("\n Current time = %d", getClk());
+}
+
+void print_RR_Info(const struct ProcessStruct *const process) {
+    if (process == NULL) {
+        printf("\n****************************\nNULL Error in __RR_print_process_info\n****************************\n");
+        exit(0);
+    }
+    printf("\n*********************************************\n");
+    printf("id                : %d\n", process->id);
+    printf("arrivalTime       : %d\n", process->arrivalTime);
+    printf("runtime           : %d\n", process->runTime);
+    printf("running           : %d\n", process->running);
+    printf("startedBefore     : %d\n", process->startedBefore);
+    printf("enterQueue        : %d\n", process->enterQueue);
+    printf("quitQueue         : %d\n", process->quitQueue);
+    printf("waitingTime       : %d\n", process->waitingTime);
+    printf("executionTime     : %d\n", process->executionTime);
+    printf("pid               : %d\n", process->pid);
+    printf("remaining time    : %d\n", RR_get_remaining_time(process));
+    printf("*********************************************\n");
+    fflush(stdout);
+
+}
+
+int RR_get_remaining_time(const struct ProcessStruct *const process) {
+
+    //  indicates as a dummy process
+    if (process == NULL) {
+        return INT_MIN;
+    }
+
+    // remaining_time = run_time - execution_time
+    int remainingRR = process->runTime - process->executionTime;
+
+
+    // calling abort when remaining time not > Zero
+    assert(remainingRR);
+    return remainingRR;
+
+}
+
+void RR_save_exit_queue_state(struct ProcessStruct *const process_to_run) {
+    if (process_to_run == NULL) {
+        printf("\n****************************\nNULL Error in RR_save_exit_queue_state\n****************************\n");
+        exit(0);
+    }
+    /*
+     * INPUT       : The process that has left the queue
+     * INPUT type  : const struct ProcessStruct *
+     * OUTPUT      : void
+     * NOTE        : This function saves the state of the process ON LEAVING the ready queue
+     * */
+    int current_time = getClk();
+    printf("\n=Left Queue:");
+    printf("\n Current time = %d", current_time);
+    print_RR_Info(process_to_run);
+
+    /*  Updating
+        *      1- running boolean
+        *      2- startedBefore
+        *      3- enterQueue
+        *      4- executionTime
+        */
+
+    process_to_run->running = 1;
+    process_to_run->quitQueue = current_time;
+    process_to_run->waitingTime += current_time - process_to_run->enterQueue;
+    printf("current time : %d Wait time : %d enter queue time: %d \n", current_time, process_to_run->waitingTime,
+           process_to_run->enterQueue);
+    assert(process_to_run->waitingTime >= 0);
+}
+
+void RR_save_enter_queue_state(struct ProcessStruct *const process_to_stop) {
+    if (process_to_stop == NULL) {
+        printf("\n****************************\nNULL Error in RR_save_enter_queue_state\n****************************\n");
+        exit(0);
+    }
+    /*
+     * INPUT       : The process that has entered the queue
+     * INPUT type  : const struct ProcessStruct *
+     * OUTPUT      : void
+     * NOTE        : This function saves the state of the process ON ENTERING the ready queue
+     * */
+    int current_time = getClk();
+    printf("\n=Entered Queue:");
+    printf("\n Current time = %d", current_time);
+    print_RR_Info(process_to_stop);
+
+    /*  Updating
+     *      1- running boolean
+     *      2- startedBefore
+     *      3- enterQueue
+     *      4- executionTime
+     */
+    process_to_stop->running = 0;
+    process_to_stop->startedBefore = 1;
+    process_to_stop->enterQueue = current_time;
+    process_to_stop->executionTime += current_time - process_to_stop->quitQueue;
+    assert(process_to_stop->executionTime >= 0);
+}
+
+void RR_process_finish_handler(int signum) {
+    printf("Process %d has sent me a signal %d\nWhich means it has finished execution\n", __running_process->pid,
+           signum);
+
+    printf("Current clock is : %d \n", getClk());
+
+    // Save enter queue state
+    RR_save_enter_queue_state(running_process);
+
+    // Log to file
+    print_process_info(running_process, 3);
+
+    // setting running_process to NULL
+    running_process = NULL;
+}
+
+void RR_stop(const struct ProcessStruct *const process_to_stop) {
+    if (process_to_stop == NULL) {
+        return;
+    }
+    printf("Signal Stop has been sent to the process %d\n", process_to_stop->pid);
+
+    // Send signal to process (stop the process)
+    int killResult = kill(process_to_stop->pid, SIGKILL);
+    if (killResult == -1) {
+        printf("Error in sending signal stop\n");
+        exit(-1);
+    }
+
+    //  Log to file
+    print_process_info(process_to_stop, 1);
+
+    running_process = NULL;
+}
+
+
+void RR(int quantum, struct Queue *queue) {
+
+    // TODO: checking  the remaining time of each process
+    printf("Welcome to RR Algorithm\n");
+
+    signal(SIGUSR2, RR_process_finish_handler);
+
+    int lastPid = -1;
+    int prev = getClk();
+    int current;
+
+    // flag is used to terminate the scheduler
+    while (flag) {
+        // update current time
+        current = getClk();
+        // check if there is no a process in the Queue or not
+        if (isEmptyN(queue))
+            continue;
+
+        // get the turned process from the queue  before executing
+        struct ProcessStruct *turnedProcess = peek(queue);
+
+        //check if there is no  running process
+        if (!running_process) {
+
+            // dequeue the turned process and make it a running process
+            deQueue(queue);
+
+            // save the data of a process (PCB)
+            RR_save_exit_queue_state(queue);
+
+            // run RR algorithm
+            RR_run(turnedProcess);
+
+        } else if ((current - prev) == quantum && turnedProcess->id != lastPid) {
+
+            // exchange with next process
+
+            //setting prev to current time
+            prev = current;
+            lastPid = turnedProcess->id;
+
+            //Save running process before making it NULL in RR_stop
+            struct ProcessStruct *premptedProcess = running_process;
+
+            // stopping the running process
+            RR_stop(running_process);
+
+
+            //  Save the state of the pr-empted process
+            RR_save_enter_queue_state(premptedProcess);
+
+            //adding the prompted process to queue
+            enQueue(queue, premptedProcess);
+
+            // dequeue process from queue
+            deQueue(queue);
+
+            // saving the state of turned process in queue
+            RR_save_exit_queue_state(turnedProcess);
+
+            // entering  the next process in running state
+            RR_run(turnedProcess);
+
+        }
+    }
+
+}
+
+
 // schedule the next process in the queue
 // get next process to be scheduled from the process table and remove it from ready list
 // intailize quantaum of new process
