@@ -16,7 +16,10 @@
 * Make sure that all process have been terminated use (ps -a)
 * Kill all alive processes (kill -9 [pid])
 * Make sure that all resources have been released use (ipcs)
-* Release all unreleased resources resource (ipcrm -q [id])
+* Release all unreleased resources resource 
+  * (ipcrm -q [id]) for message queue
+  * (ipcrm -s [id]) for semaphore
+  * (ipcrm -m [id]) for shared memory
 
 ### Testing
 
@@ -24,3 +27,11 @@
 
 ### Needed to be handled
 * Zero running time process
+* Exit flag (Shared memory) **process generator** and **Scheduler**
+* Total processes in the input file to calculate the WTA in the scheduler.log **process generator**
+* Assign the enterQueueTime to the arrival time in the **process generator**
+* A function to create **_scheduler.perf_** which contains summary statistics
+
+### Note from project document
+* If your algorithm does a lot of processing, processes might not start and stop
+  at the same time instance. Then, your utilization should be less than 100%.
