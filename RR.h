@@ -1,4 +1,5 @@
 #include <assert.h>
+#include "limits.h"
 
 void RR_run(struct ProcessStruct *const);
 
@@ -230,7 +231,7 @@ void RR(int quantum, struct Queue *queue) {
             deQueue(queue);
 
             // save the data of a process (PCB)
-            RR_save_exit_queue_state(queue);
+            RR_save_exit_queue_state(turnedProcess);
 
             // run RR algorithm
             RR_run(turnedProcess);
