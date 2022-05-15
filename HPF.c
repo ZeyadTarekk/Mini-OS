@@ -5,6 +5,7 @@ bool isRunning;
 void runProcess(struct ProcessStruct *d) {
     isRunning = true;
     currentRunningProcess = d;
+    currentRunningProcess->waitingTime = getClk() - currentRunningProcess->arrivalTime;
     int pid = fork();
     if (pid == -1) {
         perror("Error in execl");
@@ -16,7 +17,7 @@ void runProcess(struct ProcessStruct *d) {
 
         printf("====================================================");
         printf("\nprocess with id =  %d started with pid = %d \n", d->id, getpid());
-        printf("====================================================");
+        printf("====================================================\n");
         fflush(stdout);
         print_process_info(d, 0);
         d->pid = getpid();
@@ -34,7 +35,7 @@ void runProcess(struct ProcessStruct *d) {
 
 void processFinishedHandler(int signum) {
     isRunning = false;
-
+    currentRunningProcess->executionTime = currentRunningProcess->runTime;
     print_process_info(currentRunningProcess, 3);
     signal(SIGUSR2, processFinishedHandler);
 }
