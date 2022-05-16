@@ -64,7 +64,7 @@ void RR_run(struct ProcessStruct *const process) {
     running_process = process;
 
     printf("\n=Running:");
-    printf("\n Current time = %d", getClk());
+    printf("\n Current time = %d\n", getClk());
 }
 
 void print_RR_Info(const struct ProcessStruct *const process) {
@@ -119,7 +119,7 @@ void RR_save_exit_queue_state(struct ProcessStruct *const process_to_run) {
      * */
     int current_time = getClk();
     printf("\n=Left Queue:");
-    printf("\n Current time = %d", current_time);
+    printf("\n Current time = %d\n", current_time);
     print_RR_Info(process_to_run);
 
     /*  Updating
@@ -150,7 +150,7 @@ void RR_save_enter_queue_state(struct ProcessStruct *const process_to_stop) {
      * */
     int current_time = getClk();
     printf("\n=Entered Queue:");
-    printf("\n Current time = %d", current_time);
+    printf("\n Current time = %d\n", current_time);
     print_RR_Info(process_to_stop);
 
     /*  Updating
@@ -167,9 +167,6 @@ void RR_save_enter_queue_state(struct ProcessStruct *const process_to_stop) {
 }
 
 void RR_process_finish_handler(int signum) {
-    printf("Process %d has sent me a signal %d\nWhich means it has finished execution\n", __running_process->pid,
-           signum);
-
     printf("Current clock is : %d \n", getClk());
 
     // Save enter queue state
@@ -180,6 +177,8 @@ void RR_process_finish_handler(int signum) {
 
     // setting running_process to NULL
     running_process = NULL;
+    signal(SIGUSR2, RR_process_finish_handler);
+
 }
 
 void RR_stop(const struct ProcessStruct *const process_to_stop) {
@@ -205,24 +204,28 @@ void RR_stop(const struct ProcessStruct *const process_to_stop) {
 void RR(int quantum, struct Queue *queue) {
 
     // TODO: checking  the remaining time of each process
-    printf("Welcome to RR Algorithm\n");
+    printf("\n\n****************Welcome to RR Algorithm****************\n\n");
 
     signal(SIGUSR2, RR_process_finish_handler);
 
     int lastPid = -1;
+    int current = getClk();
     int prev = getClk();
-    int current;
+
 
     // flag is used to terminate the scheduler
     while (flag) {
-        // update current time
-        current = getClk();
+
         // check if there is no a process in the Queue or not
-        if (isEmptyN(queue))
-            continue;
+        while (isEmptyN(queue)) {}
+
 
         // get the turned process from the queue  before executing
         struct ProcessStruct *turnedProcess = peekN(queue);
+
+        // update current time
+        current = getClk();
+        int doneQuantum = current - prev;
 
         //check if there is no  running process
         if (!running_process) {
@@ -235,8 +238,10 @@ void RR(int quantum, struct Queue *queue) {
 
             // run RR algorithm
             RR_run(turnedProcess);
+            prev = current;
 
-        } else if ((current - prev) == quantum && turnedProcess->id != lastPid) {
+        } else if (doneQuantum >= quantum && turnedProcess->id != lastPid) {
+            printf("\n====================  Shifting occurs at time : %d  ====================\n", current);
 
             // exchange with next process
 
@@ -268,6 +273,7 @@ void RR(int quantum, struct Queue *queue) {
 
         }
     }
+    printf("\n\n*************RR Terminated at  time = %d*************\n\n", getClk());
 
 }
 
