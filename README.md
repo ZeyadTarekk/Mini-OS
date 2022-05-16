@@ -26,11 +26,11 @@
 * Send signal 5 (SIGTRAP) for the scheduler to make it print the **priority** queue at any time
 
 ### Needed to be handled
-* Zero running time process
-* Exit flag (Shared memory) **process generator** and **Scheduler**
-* Total processes in the input file to calculate the WTA in the scheduler.log **process generator**
-* Assign the enterQueueTime to the arrival time in the **process generator**
-* A function to create **_scheduler.perf_** which contains summary statistics
+* [x] Zero running time process
+* [ ] Exit flag (Shared memory) **process generator** and **Scheduler**
+* [ ] Total processes in the input file to calculate the WTA in the scheduler.log **process generator**
+* [ ] Assign the enterQueueTime to the arrival time in the **process generator**
+* [ ] A function to create **_scheduler.perf_** which contains summary statistics
 
 ### Note from project document
 * If your algorithm does a lot of processing, processes might not start and stop
