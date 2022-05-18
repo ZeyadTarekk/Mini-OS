@@ -118,6 +118,8 @@ struct ProcessStruct
     // The real id of forked process
     int pid;
 
+    // Pointer to memory at which this process is allocated
+    struct Memory* memory;
 };
 
 
