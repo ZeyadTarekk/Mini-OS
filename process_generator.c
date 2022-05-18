@@ -194,4 +194,5 @@ void clearResources(int signum) {
 
     //clear the message queue resources
     msgctl(msgq_id, IPC_RMID, (struct msqid_ds *) 0);
+    semctl(scheduler_pGenerator_sem, 0,IPC_RMID,(struct semid_ds *) 0);
 }
