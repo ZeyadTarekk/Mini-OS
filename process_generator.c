@@ -32,7 +32,7 @@ void readFile(struct Queue *processQueue) {
         p->runTime = runningtime;
         p->running = false;
         p->startedBefore = false;
-        p->enterQueue = 0;
+        p->enterQueue = arrivaltime;
         p->quitQueue = 0;
         p->executionTime = 0;
         p->waitingTime = 0;
@@ -81,7 +81,7 @@ void initializeSemaphore() {
         exit(-1);
     }
 
-    printf("Semaphore created with id: %d\n",scheduler_pGenerator_sem);
+    printf("Semaphore created with id: %d\n", scheduler_pGenerator_sem);
 
     // Initialize the semaphore
     union Semun semun;

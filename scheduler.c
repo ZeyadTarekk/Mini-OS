@@ -171,7 +171,7 @@ void getProcess(int signum) {
             add_to_SRTN_queue(message.process);
             break;
         case 3:
-            // TODO: Add to [QUEUE] as RR
+            // DONE: Add to [QUEUE] as RR
             add_to_RR_queue(message.process);
             break;
     }
