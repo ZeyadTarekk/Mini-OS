@@ -68,6 +68,24 @@ void destroyClk(bool terminateAll)
     }
 }
 
+//Memory struct
+struct Memory {
+    // Start of memory [0 : 1023 - min limit ]
+    // Min limit is initially defined with 8
+    int start;
+
+    // End of memory [0 + min limit : 1023]
+    int end;
+
+    // true  : Has a process allocated at this memory partition
+    // false : Doesn't have a process allocated at this memory partition
+    bool hasProcess;
+
+    // This is the process id from the input file
+    // This data member may be useless
+    // Set it to -1 if hasProcess = false
+    int pid;
+};
 
 //the struct of process
 struct ProcessStruct
