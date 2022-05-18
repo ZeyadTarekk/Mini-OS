@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
             // Allocate the queue
             queue = createQueue();
             // Call the algorithm function
-            RR(1, queue);
+            RR(2, queue);
             break;
     }
 

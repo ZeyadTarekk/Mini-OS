@@ -221,12 +221,15 @@ void RR(int quantum, struct Queue *queue) {
 
             // run RR algorithm
             RR_run(turnedProcess);
+            prev = current;
 
         } else if (slots >= quantum && (slots % quantum) == 0 && turnedProcess->id != lastPid) {
 //            printf("\n====================  Shifting occurs at time : %d  ====================\n", current);
 
             // exchange with next process
             lastPid = turnedProcess->id;
+            //setting prev to current time
+            prev = current;
 
             //Save running process before making it NULL in RR_stop
             struct ProcessStruct *premptedProcess = running_process;
@@ -253,8 +256,6 @@ void RR(int quantum, struct Queue *queue) {
             }
 
         }
-        //setting prev to current time
-        prev = current;
 
     }
     printf("\n\n*************RR Terminated at  time = %d*************\n\n", getClk());
