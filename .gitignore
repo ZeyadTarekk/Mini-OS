@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+CMakeLists.txt
+cmake-build-debug
+
 .idea
 
 # Object files
