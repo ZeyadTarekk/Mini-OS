@@ -63,6 +63,9 @@ void __SRTN_process_finish_handler(int signum) {
     // Log to file
     print_process_info(__running_process, 3);
 
+    // DONE: Free allocated memory
+    free(__running_process);
+
     // DONE: set __running_process to NULL
     __running_process = NULL;
 }
@@ -255,8 +258,9 @@ int __SRTN_get_remaining_time(const struct ProcessStruct *const process) {
 }
 
 int
-__SRTN_compare_remaining_time(const struct ProcessStruct *const process1, const struct ProcessStruct *const process2) {
-    if (process2 == NULL) {
+__SRTN_compare_remaining_time(const struct ProcessStruct *const top_process,
+                              const struct ProcessStruct *const running_process) {
+    if (running_process == NULL) {
         return 0;
         exit(0);
     }
@@ -271,11 +275,23 @@ __SRTN_compare_remaining_time(const struct ProcessStruct *const process1, const 
      * OUTPUT      : 1 if the remaining time of the first process is less than that of second process else returns 0
      * Return type : int
      * */
+    int execution_for_running = getClk() - running_process->quitQueue;
 
-    int process1_remaining_time = __SRTN_get_remaining_time(process1);
-    int process2_remaining_time = __SRTN_get_remaining_time(process2);
+    int top_process_remaining_time = top_process->runTime - top_process->executionTime;
+    int running_process_remaining_time =
+            running_process->runTime - (running_process->executionTime + execution_for_running);
+    if (running_process_remaining_time < 0) {
+        return 0;
+    }
+    if (top_process_remaining_time < 0 || running_process_remaining_time < 0) {
+        printf("Quit queue = %d , current clk = %d\n", running_process->quitQueue, getClk());
+        printf("execution_for_running = %d \n", execution_for_running);
+        printf("top_process_remaining_time = %d running_process_remaining_time = %d\n", top_process_remaining_time,
+               running_process_remaining_time);
+    }
 
-    return process1_remaining_time < process2_remaining_time;
+    assert(top_process_remaining_time >= 0 && running_process_remaining_time >= 0);
+    return top_process_remaining_time < running_process_remaining_time;
 }
 
 void SRTN(struct PQueue *priority_queue) {
@@ -286,7 +302,7 @@ void SRTN(struct PQueue *priority_queue) {
 
     int lastPid = -1;
     /*TODO: There still processes in the Queue or there still processes will be received*/
-    while (flag || isEmpty(priority_queue)==false || __running_process != NULL) {
+    while (flag || isEmpty(priority_queue) == false || __running_process != NULL) {
 
         // DONE: Check if the queue is empty
         if (isEmpty(priority_queue)) {
@@ -309,6 +325,9 @@ void SRTN(struct PQueue *priority_queue) {
             __SRTN_run(top_queue);
 
         } else if (top_queue->id != lastPid && __SRTN_compare_remaining_time(top_queue, __running_process)) {
+            printf("top queue remain = %d running remain = %d ", __SRTN_get_remaining_time(top_queue),
+                   __SRTN_get_remaining_time(__running_process));
+
             // IF THE FIRST PROCESS IN THE READY QUEUE HAS SMALLER REMAINING TIME
             lastPid = top_queue->id;
             /**** STEPS TO STOP THE RUNNING PROCESS ****/
