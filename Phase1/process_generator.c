@@ -10,6 +10,7 @@ RR --> 3
 // global variables
 int msgq_id;
 int scheduler_pGenerator_sem;
+int processesNum;
 struct msgbuff message;
 
 
@@ -19,6 +20,7 @@ void readFile(struct Queue *processQueue) {
     FILE *file = fopen("processes.txt", "r");
 
     int id, arrivaltime, runningtime, priority;
+    processesNum = 0;
     //read the first line (commented one)
     char s[30];
     fgets(s, 30, file);
@@ -39,6 +41,7 @@ void readFile(struct Queue *processQueue) {
         p->pid = -1;
 
         enQueue(processQueue, p);
+        processesNum++;
     }
     fclose(file);
 }
@@ -70,18 +73,15 @@ void intializeMessageQueue() {
 }
 
 void initializeSemaphore() {
-    key_t semkey = ftok("sem.txt", 70);
 
     // Create a semaphore to synchronize the scheduler with process generator
-    scheduler_pGenerator_sem = semget(semkey, 1, 0666 | IPC_CREAT);
+    scheduler_pGenerator_sem = semget(SEMA, 1, 0666 | IPC_CREAT);
 
     // Check is semaphore id is -1
     if (scheduler_pGenerator_sem == -1) {
         perror("Error in creating semaphores");
         exit(-1);
     }
-
-    printf("Semaphore created with id: %d\n", scheduler_pGenerator_sem);
 
     // Initialize the semaphore
     union Semun semun;
@@ -98,10 +98,16 @@ void sendProcess(struct ProcessStruct *process) {
     message.process = *process;
     int send_val = msgsnd(msgq_id, &message, sizeof(message.process), !IPC_NOWAIT);
 
-    printf("message sent: %d\n", message.process.id);
+    // printf("message sent: %d\n", message.process.id);
     if (send_val == -1)
         perror("Errror in send");
+}
 
+void sendStopProcess() {
+    struct ProcessStruct *process = (struct ProcessStruct *) malloc(sizeof(struct ProcessStruct));
+    process->id = -1;
+    printf("Sending process with -1\n");
+    sendProcess(process);
 }
 
 
@@ -134,9 +140,14 @@ int main(int argc, char *argv[]) {
     if (schedulerpid == 0) {
         //run the scheduler file
         int length = snprintf(NULL, 0, "%d", algorithm);
-        char *str = malloc(length + 1);
-        snprintf(str, length + 1, "%d", algorithm);
-        char *args[] = {"./scheduler.out", str, NULL};
+        char *algo = malloc(length + 1);
+        snprintf(algo, length + 1, "%d", algorithm);
+
+        length = snprintf(NULL, 0, "%d", processesNum);
+        char *procNum = malloc(length + 1);
+        snprintf(procNum, length + 1, "%d", processesNum);
+
+        char *args[] = {"./scheduler.out", algo, procNum, NULL};
         execv(args[0], args);
     }
 
@@ -146,9 +157,6 @@ int main(int argc, char *argv[]) {
 
     // To get time use this
     int clk;
-    // int clk = getClk();
-    // printf("current time is %d\n", clk);
-
 
     // TODO Generation Main Loop
     // 5. Create a data structure for processes and provide it with its parameters.
@@ -176,6 +184,11 @@ int main(int argc, char *argv[]) {
         deQueue(processQueue);
     }
 
+    //send a process with id = -1
+    //to inform the schedular that there is no other processes coming
+    sendStopProcess();
+    kill(schedulerpid, SIGUSR1);
+
     //wait for the schedular to finish before clearing the clock resources
     waitpid(schedulerpid, NULL, 0);
 
@@ -183,10 +196,6 @@ int main(int argc, char *argv[]) {
 
     // 7. Clear clock resources
     destroyClk(true);
-
-    // Clear resources after finishing
-    // 0 is dummy
-    clearResources(0);
 }
 
 void clearResources(int signum) {
@@ -195,4 +204,7 @@ void clearResources(int signum) {
     //clear the message queue resources
     msgctl(msgq_id, IPC_RMID, (struct msqid_ds *) 0);
     semctl(scheduler_pGenerator_sem, 0,IPC_RMID,(struct semid_ds *) 0);
+
+    //clear the semaphores resources
+    semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (union Semun)0);
 }

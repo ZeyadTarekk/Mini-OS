@@ -1,6 +1,6 @@
-//TODO: Remove this flag after creating end shared memory for testing
 #include "headers.h"
 
+//used to inform the scheduler that there is no other processes coming
 int flag = 1;
 
 void print_process_info(const struct ProcessStruct *const, int);
@@ -12,6 +12,7 @@ void print_process_info(const struct ProcessStruct *const, int);
 // global variables
 int msgq_id;
 int algorithm;
+int processesNum;
 int scheduler_pGenerator_sem;
 struct msgbuff message;
 struct PQueue *priority_queue;
@@ -53,17 +54,14 @@ void intializeMessageQueue() {
 
 void initializeSemaphore() {
 
-    key_t semkey = ftok("sem.txt", 70);
-
     // Create a semaphore to synchronize the scheduler with process generator
-    scheduler_pGenerator_sem = semget(semkey, 1, 0666 | IPC_CREAT);
+    scheduler_pGenerator_sem = semget(SEMA, 1, 0666 | IPC_CREAT);
 
     // Check is semaphore id is -1
     if (scheduler_pGenerator_sem == -1) {
         perror("Error in creating semaphores");
         exit(-1);
     }
-    printf("Scheduler: Semaphore created with id: %d\n", scheduler_pGenerator_sem);
 }
 
 int main(int argc, char *argv[]) {
@@ -72,6 +70,8 @@ int main(int argc, char *argv[]) {
 
     //add signal handler to get the processes from process_generator
     signal(SIGUSR1, getProcess);
+
+    //for testing
     signal(SIGTRAP, printQueue);
 
 
@@ -81,24 +81,27 @@ int main(int argc, char *argv[]) {
     //Initialize the semaphore
     initializeSemaphore();
 
-    //initialize the message queue
+    //Initialize the message queue
     intializeMessageQueue();
 
 
     //get the algorithm number
     algorithm = atoi(argv[1]);
 
+    //get the total number of the processes
+    processesNum = atoi(argv[2]);
+
     switch (algorithm) {
         case 1:
             // Allocate the priority queue
             priority_queue = createPriorityQueue();
+            // Call the algorithm function
             HPF(priority_queue);
 
             break;
         case 2:
             // Allocate the priority queue
             priority_queue = createPriorityQueue();
-
             // Call the algorithm function
             SRTN(priority_queue);
 
@@ -112,42 +115,49 @@ int main(int argc, char *argv[]) {
     }
 
     printf("\n\n===================================scheduler Terminated at time = %d===================================\n\n",
-           getClk());
-
+            getClk());
+    
     // TODO: Check its logic
     // Destroy your clock
-    destroyClk(true);
+    destroyClk(false);
     return 0;
 }
 
 void add_to_SRTN_queue(struct ProcessStruct process) {
-    // Push to the queue and the priority is the runTime (The remaining time at the beginning)
-    struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
-                                                      process.runTime, process.running,
-                                                      process.startedBefore, process.enterQueue, process.quitQueue,
-                                                      process.executionTime,
-                                                      process.waitingTime, process.pid);
-    push(priority_queue, newProcess, newProcess->priority);
+    if (process.id != -1)
+    {
+        // Push to the queue and the priority is the runTime (The remaining time at the beginning)
+        struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
+                                                          process.runTime, process.running,
+                                                          process.startedBefore, process.enterQueue, process.quitQueue,
+                                                          process.executionTime,
+                                                          process.waitingTime, process.pid);
+        push(priority_queue, newProcess, newProcess->runTime);
+    }
 }
 
 void add_to_HPF_queue(struct ProcessStruct process) {
-    // Push to the queue and the priority is the priority (The priority of the process)
-    struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
-                                                      process.runTime, process.running,
-                                                      process.startedBefore, process.enterQueue, process.quitQueue,
-                                                      process.executionTime,
-                                                      process.waitingTime, process.pid);
-    push(priority_queue, newProcess, newProcess->priority);
+    if (process.id != -1) {
+        // Push to the queue and the priority is the priority (The priority of the process)
+        struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
+                                                          process.runTime, process.running,
+                                                          process.startedBefore, process.enterQueue, process.quitQueue,
+                                                          process.executionTime,
+                                                          process.waitingTime, process.pid);
+        push(priority_queue, newProcess, newProcess->priority);
+    }
 }
 
 void add_to_RR_queue(struct ProcessStruct process) {
-    // enqueue (The remaining time at the beginning)
-    struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
-                                                      process.runTime, process.running,
-                                                      process.startedBefore, process.enterQueue, process.quitQueue,
-                                                      process.executionTime,
-                                                      process.waitingTime, process.pid);
-    enQueue(queue, newProcess);
+    if (process.id != -1) {
+        // enqueue (The remaining time at the beginning)
+        struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
+                                                          process.runTime, process.running,
+                                                          process.startedBefore, process.enterQueue, process.quitQueue,
+                                                          process.executionTime,
+                                                          process.waitingTime, process.pid);
+        enQueue(queue, newProcess);
+    }
 }
 
 void getProcess(int signum) {
@@ -159,8 +169,7 @@ void getProcess(int signum) {
     if (rec_val == -1) {
         perror("Error in receive");
     }
-    // For testing only
-    //__SRTN_print_process_info(&message.process);
+
     switch (algorithm) {
         case 1:
             // TODO: Add to [PRIORITY QUEUE] as HPF
@@ -180,11 +189,7 @@ void getProcess(int signum) {
     // Up the semaphore to allow process generator to continue
     up(scheduler_pGenerator_sem);
 
-    // message.process.id == <id of last process> => Last process is not valid
-    // This is only for testing
-    // Until we make a shared memory for terminating
-    // Use the flag as a condition of your main loop
-    //TODO: Remove this condition after creating end shared memory for testing
+    //check if that process was the terminating one (id = -1)
     if (message.process.id == -1) {
         flag = 0;
     }
@@ -261,11 +266,12 @@ void print_process_info(const struct ProcessStruct *const process, int state) {
     fprintf(outputFile, "%d ", process->waitingTime);
 
     if (state == 3) {
+        int TA = current_time - process->arrivalTime;
+        float WTA = (float) TA / process->runTime;
         fprintf(outputFile, "%s", "TA ");
-        fprintf(outputFile, "%d ", current_time - process->arrivalTime);
+        fprintf(outputFile, "%d ", TA);
         fprintf(outputFile, "%s", "WTA ");
-        // TODO: Divide by the total number of processes
-        fprintf(outputFile, "%d ", (current_time - process->arrivalTime));
+        fprintf(outputFile, "%.2f ", WTA);
     }
     fprintf(outputFile, "%s", "\n");
     fclose(outputFile);
