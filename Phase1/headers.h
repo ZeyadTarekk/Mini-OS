@@ -116,7 +116,6 @@ Messages Type:
 struct msgbuff
 {
     long mtype;
-    // char mtext[70];
     struct ProcessStruct process;
 };
 

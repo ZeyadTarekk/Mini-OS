@@ -237,7 +237,7 @@ void create_scheduler_perf() {
 
     //CPU utilization
     fprintf(outputFile, "%s", "CPU utilization = ");
-    fprintf(outputFile, "%d%%\n", (totalRunTime / getClk()));
+    fprintf(outputFile, "%d%%\n", (totalRunTime / getClk())*100);
 
     //Avg WTA
     fprintf(outputFile, "%s", "Avg WTA = ");
