@@ -38,6 +38,7 @@ void processFinishedHandler(int signum) {
     isRunning = false;
     currentRunningProcess->executionTime = currentRunningProcess->runTime;
     print_process_info(currentRunningProcess, 3);
+    free(currentRunningProcess);
     signal(SIGUSR2, processFinishedHandler);
 }
 
@@ -48,7 +49,7 @@ void HPF(struct PQueue *pq) {
     isRunning = false;
     printf("HPF Started\n");
     processesQueue = pq;
-    while (flag) {
+    while (flag || !isEmpty(processesQueue) || isRunning) {
         if (isEmpty(processesQueue))
             continue;
         if (!isRunning) {
