@@ -237,7 +237,8 @@ void create_scheduler_perf() {
 
     //CPU utilization
     fprintf(outputFile, "%s", "CPU utilization = ");
-    fprintf(outputFile, "%d%%\n", (totalRunTime / getClk()) * 100);
+
+    fprintf(outputFile, "%d%%\n", (totalRunTime * 100 / getClk()));
 
     //Avg WTA
     fprintf(outputFile, "%s", "Avg WTA = ");
@@ -249,7 +250,8 @@ void create_scheduler_perf() {
 
     //Std WTA
     meanWTA = sumWTA / processesNum;
-    STD = sqrt((float)((sumWTA) - (processesNum * pow(meanWTA, 2))) / processesNum);
+    float x = ((sumWTA) - (processesNum * pow(meanWTA, 2)));
+    STD = sqrt(abs(x) / processesNum);
 
     fprintf(outputFile, "%s", "Std WTA = ");
     fprintf(outputFile, "%.2f\n", STD);
