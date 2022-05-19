@@ -1,5 +1,0 @@
-
-//TODO: Testing
-int main(){
-
-}

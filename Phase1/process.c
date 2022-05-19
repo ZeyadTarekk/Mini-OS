@@ -28,7 +28,7 @@ int main(int agrc, char *argv[]) {
     }
 
     // DONE: When the remaining time is zero send a signal to the scheduler
-     kill(getppid(), SIGUSR2);
+    kill(getppid(), SIGUSR2);
 
     destroyClk(false);
 

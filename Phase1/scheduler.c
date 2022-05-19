@@ -234,7 +234,6 @@ void create_scheduler_perf() {
      * */
     FILE *outputFile;
     outputFile = fopen("scheduler.perf", "w");
-    // fprintf(outputFile, "%s",);
 
     //CPU utilization
     fprintf(outputFile, "%s", "CPU utilization = ");
