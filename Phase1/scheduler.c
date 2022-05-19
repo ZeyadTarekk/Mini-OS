@@ -237,7 +237,7 @@ void create_scheduler_perf() {
 
     //CPU utilization
     fprintf(outputFile, "%s", "CPU utilization = ");
-    fprintf(outputFile, "%d%%\n", (totalRunTime / getClk())*100);
+    fprintf(outputFile, "%d%%\n", (totalRunTime / getClk()) * 100);
 
     //Avg WTA
     fprintf(outputFile, "%s", "Avg WTA = ");
@@ -312,7 +312,10 @@ void print_process_info(const struct ProcessStruct *const process, int state) {
 
     if (state == 3) {
         int TA = current_time - process->arrivalTime;
-        float WTA = (float) TA / process->runTime;
+        float WTA;
+        if (process->runTime == 0)
+            WTA = 0;
+        else WTA = (float) TA / process->runTime;
         //save this values for scheduler.perf file
         sumWTA += WTA;
         sumWTASq += pow(WTA, 2);
