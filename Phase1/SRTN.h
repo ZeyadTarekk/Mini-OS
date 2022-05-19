@@ -17,7 +17,7 @@ int __SRTN_compare_remaining_time(const struct ProcessStruct *const, const struc
 
 void __SRTN_process_finish_handler(int);
 
-
+struct Queue *finished_processes;
 struct ProcessStruct *__running_process = NULL;
 
 long long __number_of_finished_processes = 0;
@@ -64,7 +64,7 @@ void __SRTN_process_finish_handler(int signum) {
     print_process_info(__running_process, 3);
 
     // DONE: Free allocated memory
-    free(__running_process);
+    enQueue(finished_processes, __running_process);
 
     // DONE: set __running_process to NULL
     __running_process = NULL;
@@ -295,6 +295,8 @@ __SRTN_compare_remaining_time(const struct ProcessStruct *const top_process,
 }
 
 void SRTN(struct PQueue *priority_queue) {
+    // allocate finished processes
+    finished_processes = createQueue();
 
     // Set SIGUSR2 handler to handle the process that has finished execution
     // DONE : Make sure that the one who sends the signal in file process uses the same signal as you
@@ -357,6 +359,12 @@ void SRTN(struct PQueue *priority_queue) {
             // DONE: Run the other process                  => Run process function
             __SRTN_run(top_queue);
         }
+    }
+    // Deallocate all processes
+    while (!isEmptyN(finished_processes)) {
+        struct ProcessStruct *finishedP = peekN(finished_processes);
+        deQueue(finished_processes);
+        free(finishedP);
     }
     printf("\n\n===================================SRTN Terminated flag = %d at time = %d===================================\n\n",
            flag, getClk());
