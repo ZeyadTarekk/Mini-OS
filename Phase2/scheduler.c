@@ -7,7 +7,7 @@ void print_process_info(const struct ProcessStruct *const, int);
 
 #include "SRTN.h"
 #include "RR.h"
-#include "HPF.c"
+#include "HPF.h"
 
 // global variables
 int msgq_id;
