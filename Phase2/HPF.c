@@ -12,11 +12,12 @@ void runProcess(struct ProcessStruct *d) {
         exit(-1);
     }
     if (pid == 0) {
-        char remainingTime[10];
-        sprintf(remainingTime, "%d", d->runTime);
+        int lengthOfRemainingTime = snprintf(NULL, 0, "%d", d->runTime);
+        char *remainingTime = malloc(lengthOfRemainingTime + 1);
+        snprintf(remainingTime, lengthOfRemainingTime + 1, "%d", d->runTime);
 
         printf("====================================================");
-        printf("\nprocess with id =  %d started with pid = %d \n", d->id, getpid());
+        printf("\nprocess with id =  %d started with pid = %d current time = %d \n", d->id, getpid(), getClk());
         printf("====================================================\n");
         fflush(stdout);
         print_process_info(d, 0);
@@ -48,9 +49,8 @@ void HPF(struct PQueue *pq) {
     printf("HPF Started\n");
     processesQueue = pq;
     while (flag) {
-        while (isEmpty(processesQueue)) {
-
-        }
+        if (isEmpty(processesQueue))
+            continue;
         if (!isRunning) {
             readyProcess = peek(processesQueue);
             pop(processesQueue);
