@@ -11,6 +11,7 @@ RR --> 3
 int msgq_id;
 int scheduler_pGenerator_sem;
 int processesNum;
+int totalRunTime;
 struct msgbuff message;
 
 
@@ -21,6 +22,7 @@ void readFile(struct Queue *processQueue) {
 
     int id, arrivaltime, runningtime, priority;
     processesNum = 0;
+    totalRunTime = 0;
     //read the first line (commented one)
     char s[30];
     fgets(s, 30, file);
@@ -40,8 +42,9 @@ void readFile(struct Queue *processQueue) {
         p->waitingTime = 0;
         p->pid = -1;
 
-        enQueue(processQueue, p);
         processesNum++;
+        totalRunTime += runningtime;
+        enQueue(processQueue, p);
     }
     fclose(file);
 }
@@ -147,7 +150,11 @@ int main(int argc, char *argv[]) {
         char *procNum = malloc(length + 1);
         snprintf(procNum, length + 1, "%d", processesNum);
 
-        char *args[] = {"./scheduler.out", algo, procNum, NULL};
+        length = snprintf(NULL, 0, "%d", totalRunTime);
+        char *totalRT = malloc(length + 1);
+        snprintf(totalRT, length + 1, "%d", totalRunTime);
+
+        char *args[] = {"./scheduler.out", algo, procNum, totalRT, NULL};
         execv(args[0], args);
     }
 

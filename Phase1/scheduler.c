@@ -14,6 +14,14 @@ int msgq_id;
 int algorithm;
 int processesNum;
 int scheduler_pGenerator_sem;
+//variables for scheduler.perf file
+int totalRunTime;
+int totalWaitingTime = 0;
+float sumWTA = 0.0;
+float meanWTA;
+float sumWTASq = 0.0;
+float STD;
+
 struct msgbuff message;
 struct PQueue *priority_queue;
 struct Queue *queue;
@@ -23,6 +31,7 @@ void getProcess(int);
 void printQueue(int);
 
 void create_scheduler_log();
+void create_scheduler_perf();
 
 struct ProcessStruct *create_process
         (int id, int arrivalTime, int priority, int runTime,
@@ -91,6 +100,9 @@ int main(int argc, char *argv[]) {
     //get the total number of the processes
     processesNum = atoi(argv[2]);
 
+    //get the total run time of all processes
+    totalRunTime = atoi(argv[3]);
+
     switch (algorithm) {
         case 1:
             // Allocate the priority queue
@@ -116,8 +128,9 @@ int main(int argc, char *argv[]) {
 
     printf("\n\n===================================scheduler Terminated at time = %d===================================\n\n",
             getClk());
+
+    create_scheduler_perf();
     
-    // TODO: Check its logic
     // Destroy your clock
     destroyClk(false);
     return 0;
@@ -214,6 +227,37 @@ void create_scheduler_log() {
     fclose(outputFile);
 }
 
+void create_scheduler_perf() {
+    /*
+     * A function that creates "scheduler.perf"
+     * and fill it with some statistics
+     * */
+    FILE *outputFile;
+    outputFile = fopen("scheduler.perf", "w");
+    // fprintf(outputFile, "%s",);
+
+    //CPU utilization
+    fprintf(outputFile, "%s", "CPU utilization = ");
+    fprintf(outputFile, "%d%%\n", (totalRunTime / getClk()));
+
+    //Avg WTA
+    fprintf(outputFile, "%s", "Avg WTA = ");
+    fprintf(outputFile, "%.2f\n", (sumWTA / processesNum));
+
+    //Avg Waiting
+    fprintf(outputFile, "%s", "Avg Waiting = ");
+    fprintf(outputFile, "%.2f\n", ((float)totalWaitingTime / processesNum));
+
+    //Std WTA
+    meanWTA = sumWTA / processesNum;
+    STD = sqrt((float)((sumWTA) - (processesNum * pow(meanWTA, 2))) / processesNum);
+
+    fprintf(outputFile, "%s", "Std WTA = ");
+    fprintf(outputFile, "%.2f\n", STD);
+
+    fclose(outputFile);
+}
+
 void print_process_info(const struct ProcessStruct *const process, int state) {
     /*
      * DESCRIPTION : A function that prints the scheduler action
@@ -264,10 +308,16 @@ void print_process_info(const struct ProcessStruct *const process, int state) {
     fprintf(outputFile, "%d ", __SRTN_get_remaining_time(process));
     fprintf(outputFile, "%s", "wait ");
     fprintf(outputFile, "%d ", process->waitingTime);
+    //save this value for scheduler.perf file
+    totalWaitingTime += process->waitingTime;
 
     if (state == 3) {
         int TA = current_time - process->arrivalTime;
         float WTA = (float) TA / process->runTime;
+        //save this values for scheduler.perf file
+        sumWTA += WTA;
+        sumWTASq += pow(WTA, 2);
+
         fprintf(outputFile, "%s", "TA ");
         fprintf(outputFile, "%d ", TA);
         fprintf(outputFile, "%s", "WTA ");
