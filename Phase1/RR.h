@@ -133,7 +133,7 @@ void RR_save_exit_queue_state(struct ProcessStruct *const process_to_run) {
 void RR_save_enter_queue_state(struct ProcessStruct *const process_to_stop) {
     if (process_to_stop == NULL) {
         printf("\n****************************\nNULL Error in RR_save_enter_queue_state\n****************************\n");
-//        exit(0);
+        exit(0);
     }
     int current_time = getClk();
     printf("\n=Entered Queue:");
@@ -157,9 +157,12 @@ void RR_process_finish_handler(int signum) {
 
     // Log to file
     print_process_info(running_process, 3);
+    // free process from memory
+    free(running_process);
 
     // setting running_process to NULL
     running_process = NULL;
+
     signal(SIGUSR2, RR_process_finish_handler);
 
 }
@@ -176,7 +179,6 @@ void RR_stop(const struct ProcessStruct *const process_to_stop) {
         printf("Error in sending signal stop\n");
         exit(-1);
     }
-
 
     running_process = NULL;
 }
@@ -236,12 +238,14 @@ void RR(int quantum, struct Queue *queue) {
             //Save running process before making it NULL in RR_stop
             struct ProcessStruct *premptedProcess = running_process;
 
+            // calculate remaining
+            int remainingTime = RR_get_remaining_time(premptedProcess) - (getClk() - premptedProcess->quitQueue);
 
-            // stopping the running process
-            RR_stop(running_process);
+            assert(remainingTime >= 0);
+            if (remainingTime > 0) {
 
-
-            if (RR_get_remaining_time(premptedProcess) > 0) {
+                // stopping the running process
+                RR_stop(running_process);
 
                 //  Save the state of the pr-empted process
                 RR_save_enter_queue_state(premptedProcess);
