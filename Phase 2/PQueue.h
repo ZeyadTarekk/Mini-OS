@@ -1,13 +1,3 @@
-//Priority Queue
-struct PQNode {
-    struct ProcessStruct* data;
-    // Lower values indicate higher priority
-    int priority;
-    struct PQNode* next;
-};
-struct PQueue {
-    struct PQNode *head;
-};
 // Function to create an empty queue
 struct PQueue* createPriorityQueue()
 {

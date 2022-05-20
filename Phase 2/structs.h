@@ -1,3 +1,36 @@
+//Tree
+struct TNode {
+    struct Memory *data;
+    struct TNode *leftChild, *rightChild, *parent;
+};
+struct Tree {
+    struct TNode *root;
+};
+
+
+// Normal Queue
+struct QNode {
+    struct ProcessStruct* data;
+    struct QNode* next;
+};
+
+struct Queue {
+    struct QNode *front, *rear;
+};
+
+
+//Priority Queue
+struct PQNode {
+    struct ProcessStruct* data;
+    // Lower values indicate higher priority
+    int priority;
+    struct PQNode* next;
+};
+struct PQueue {
+    struct PQNode *head;
+};
+
+
 //Memory struct
 struct Memory {
     // Start of memory [0 : 1023 - min limit ]
@@ -49,8 +82,8 @@ struct ProcessStruct
     // The real id of forked process
     int pid;
 
-    // Pointer to the Memory allocated for this process
-    struct Memory *memory;
+    // Pointer to the TNode allocated for this process
+    struct TNode *memoryNode;
 
 };
 

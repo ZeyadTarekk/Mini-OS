@@ -9,15 +9,6 @@ struct Memory *creatMemory(int start, int end) {
     return newMem;
 }
 
-//Tree
-struct TNode {
-    struct Memory *data;
-    struct TNode *leftChild, *rightChild, *parent;
-};
-struct Tree {
-    struct TNode *root;
-};
-
 // creating new Tree
 struct Tree *createMemoryTree(int size) {
     struct Tree *tree = (struct Tree *)malloc(sizeof(struct Tree));

@@ -1,13 +1,3 @@
-// Normal Queue
-struct QNode {
-    struct ProcessStruct* data;
-    struct QNode* next;
-};
-
-struct Queue {
-    struct QNode *front, *rear;
-};
-
 // Function to create an empty queue
 struct Queue* createQueue()
 {
