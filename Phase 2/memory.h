@@ -33,7 +33,7 @@ void splitMemory(struct TNode *root) {
 
 // Function used to allocate memory for the sent process with the perfect size
 // Return NULL if there is no available memory at this moment
-struct Memory * allocateMemory(struct TNode *root, struct ProcessStruct* process, int powerOfTwo) {
+struct TNode * allocateMemory(struct TNode *root, struct ProcessStruct* process, int powerOfTwo) {
 
     // check if the root has no process and size is good --> then assign and return
     if ((root->data->hasProcess == true && (root->data->end - root->data->start + 1) == powerOfTwo)
@@ -46,7 +46,7 @@ struct Memory * allocateMemory(struct TNode *root, struct ProcessStruct* process
         // found the perfect part in the memory to allocate the process in
         root->data->hasProcess = true;
         root->data->pid = process->id;
-        return root->data;
+        return root;
     } else {
         //check if it has no process then we need to split it into two parts
         if (root->data->hasProcess == false)
@@ -60,7 +60,7 @@ struct Memory * allocateMemory(struct TNode *root, struct ProcessStruct* process
             if (root->leftChild == NULL)
                 splitMemory(root);
             
-            struct Memory *leftBranch = allocateMemory(root->leftChild, process, powerOfTwo);
+            struct TNode *leftBranch = allocateMemory(root->leftChild, process, powerOfTwo);
             if (leftBranch == NULL)
                 return allocateMemory(root->rightChild, process, powerOfTwo);
             else return leftBranch;

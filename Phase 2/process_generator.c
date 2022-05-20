@@ -42,7 +42,7 @@ void readFile(struct Queue *processQueue) {
         p->waitingTime = 0;
         p->pid = -1;
         p->memsize = memsize;
-        p->memory = NULL;
+        p->memoryNode = NULL;
 
         processesNum++;
         totalRunTime += runningtime;
