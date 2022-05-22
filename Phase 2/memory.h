@@ -67,11 +67,12 @@ struct TNode *allocateMemory(struct TNode *root, struct ProcessStruct *process, 
     }
 }
 
-void deAllocateMemory(struct TNode *memoryNodeToFree) {
+//Utility function
+void __deAllocateMemory(struct TNode *memoryNodeToFree) {
 //    Check if the node is null
 //    TODO: make the parent of the root = NULL
-    if (memoryNodeToFree == NULL)
-        return;
+//    if (memoryNodeToFree == NULL)
+//        return;
     int mySize;
     mySize = memoryNodeToFree->data->end - memoryNodeToFree->data->start + 1;
     if (mySize == 1024)
@@ -99,8 +100,13 @@ void deAllocateMemory(struct TNode *memoryNodeToFree) {
         printf("My sibling is free, my pid: %d\n", oldPid);
 //        free(memoryNodeToFree);
 //        free(mySibling);
-        deAllocateMemory(myParent);
+        __deAllocateMemory(myParent);
     }
 
 
+}
+
+//Function to be used by the scheduler
+void deAllocateMyMemory(struct ProcessStruct *process){
+    __deAllocateMemory(process->memoryNode);
 }

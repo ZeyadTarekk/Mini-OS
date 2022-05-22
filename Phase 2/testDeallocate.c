@@ -19,19 +19,24 @@ int main() {
     struct ProcessStruct *process6 = (struct ProcessStruct *) malloc(sizeof(struct ProcessStruct));
     process4->id = 6;
 //    struct TNode* memory1 = allocateMemory(memoryTree->root, process1, 512);
-    struct TNode* memory2 = allocateMemory(memoryTree->root, process2, 256);
-    struct TNode* memory3 = allocateMemory(memoryTree->root, process3, 256);
-    struct TNode* memory4 = allocateMemory(memoryTree->root, process4, 128);
-    struct TNode* memory5 = allocateMemory(memoryTree->root, process5, 128);
+    process2->memoryNode = allocateMemory(memoryTree->root, process2, 256);
+    process3->memoryNode = allocateMemory(memoryTree->root, process3, 256);
+    process4->memoryNode = allocateMemory(memoryTree->root, process4, 128);
+    process5->memoryNode = allocateMemory(memoryTree->root, process5, 128);
     printTree(memoryTree->root);
-    deAllocateMemory(memory4);
+//    deAllocateMemory(memory4);
+    deAllocateMyMemory(process4);
     printTree(memoryTree->root);
-    deAllocateMemory(memory5);
+//    deAllocateMemory(memory5);
+    deAllocateMyMemory(process5);
+
     printTree(memoryTree->root);
 
 //    deAllocateMemory(memory3);
     printTree(memoryTree->root);
-    deAllocateMemory(memory2);
+//    deAllocateMemory(memory2);
+    deAllocateMyMemory(process2);
+
     printTree(memoryTree->root);
 
 
