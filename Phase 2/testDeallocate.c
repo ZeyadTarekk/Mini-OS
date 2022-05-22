@@ -33,6 +33,8 @@ int main() {
     printTree(memoryTree->root);
 
 //    deAllocateMemory(memory3);
+//    deAllocateMyMemory(process3);
+
     printTree(memoryTree->root);
 //    deAllocateMemory(memory2);
     deAllocateMyMemory(process2);

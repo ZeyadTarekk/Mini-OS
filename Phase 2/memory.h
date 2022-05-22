@@ -70,14 +70,9 @@ struct TNode *allocateMemory(struct TNode *root, struct ProcessStruct *process, 
 //Utility function
 void __deAllocateMemory(struct TNode *memoryNodeToFree) {
 //    Check if the node is null
-//    TODO: make the parent of the root = NULL
-//    if (memoryNodeToFree == NULL)
-//        return;
-    int mySize;
-    mySize = memoryNodeToFree->data->end - memoryNodeToFree->data->start + 1;
-    if (mySize == 1024)
+    if (memoryNodeToFree == NULL)
         return;
-//    printf("My address is %d\n",&memoryNodeToFree);
+
 //    first save the parent in a pointer
     struct TNode *myParent = memoryNodeToFree->parent;
 //    then free my memory process
@@ -87,6 +82,9 @@ void __deAllocateMemory(struct TNode *memoryNodeToFree) {
     int oldPid = memoryNodeToFree->data->pid;
     memoryNodeToFree->data->hasProcess = false;
     memoryNodeToFree->data->pid = -1;
+//    Check if i don't have a parent ( 1024 memory size )
+    if (myParent == NULL)
+        return;
 //    get my sibling
     struct TNode *mySibling;
     if (myParent->leftChild == memoryNodeToFree) {
@@ -107,6 +105,6 @@ void __deAllocateMemory(struct TNode *memoryNodeToFree) {
 }
 
 //Function to be used by the scheduler
-void deAllocateMyMemory(struct ProcessStruct *process){
+void deAllocateMyMemory(struct ProcessStruct *process) {
     __deAllocateMemory(process->memoryNode);
 }
