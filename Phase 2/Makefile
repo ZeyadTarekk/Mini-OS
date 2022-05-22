@@ -6,7 +6,7 @@ build:
 	gcc test_generator.c -o test_generator.out
 
 clean:
-	rm -f *.out  processes.txt scheduler.log scheduler.perf
+	rm -f *.out  processes.txt scheduler.log scheduler.perf memory.log
 
 all: clean build
 

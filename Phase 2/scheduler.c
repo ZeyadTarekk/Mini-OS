@@ -31,7 +31,10 @@ void getProcess(int);
 void printQueue(int);
 
 void create_scheduler_log();
+
 void create_scheduler_perf();
+
+void createMemoryLog();
 
 struct ProcessStruct *create_process
         (int id, int arrivalTime, int priority, int runTime,
@@ -76,6 +79,9 @@ void initializeSemaphore() {
 int main(int argc, char *argv[]) {
     // Create scheduler.log
     create_scheduler_log();
+
+//    Create memory.log
+    createMemoryLog();
 
     //add signal handler to get the processes from process_generator
     signal(SIGUSR1, getProcess);
@@ -127,18 +133,17 @@ int main(int argc, char *argv[]) {
     }
 
     printf("\n\n===================================scheduler Terminated at time = %d===================================\n\n",
-            getClk());
+           getClk());
 
     create_scheduler_perf();
-    
+
     // Destroy your clock
     destroyClk(false);
     return 0;
 }
 
 void add_to_SRTN_queue(struct ProcessStruct process) {
-    if (process.id != -1)
-    {
+    if (process.id != -1) {
         // Push to the queue and the priority is the runTime (The remaining time at the beginning)
         struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
                                                           process.runTime, process.running,
@@ -246,7 +251,7 @@ void create_scheduler_perf() {
 
     //Avg Waiting
     fprintf(outputFile, "%s", "Avg Waiting = ");
-    fprintf(outputFile, "%.2f\n", ((float)totalWaitingTime / processesNum));
+    fprintf(outputFile, "%.2f\n", ((float) totalWaitingTime / processesNum));
 
     //Std WTA
     meanWTA = sumWTA / processesNum;
@@ -256,6 +261,16 @@ void create_scheduler_perf() {
     fprintf(outputFile, "%s", "Std WTA = ");
     fprintf(outputFile, "%.2f\n", STD);
 
+    fclose(outputFile);
+}
+
+void createMemoryLog() {
+    /*
+     * A function that creates an empty file with the beginning line for memory.log
+     * */
+    FILE *outputFile;
+    outputFile = fopen("memory.log", "w");
+    fprintf(outputFile, "%s", "#At time x allocated y bytes for process z from i t o j\n");
     fclose(outputFile);
 }
 
@@ -329,4 +344,30 @@ void print_process_info(const struct ProcessStruct *const process, int state) {
     }
     fprintf(outputFile, "%s", "\n");
     fclose(outputFile);
+}
+
+void printMemoryDetails(const struct ProcessStruct *const process, int state) {
+/*
+ * State 0 => allocation
+ * State 1 => deallocation
+ */
+    FILE *outputFile;
+    int currentTime = getClk();
+    outputFile = fopen("memory.log", "a");
+    if (!outputFile) {
+        perror("Unable to open file \"memory.log\" terminating ...\n");
+        exit(-1);
+    }
+
+//    At time 3 allocated 200 bytes for process 2 from 256 t o 383
+//    At time 6 freed 200 bytes from process 2 from 256 t o 383
+    if (state == 0)
+        fprintf(outputFile, "At time %d allocated %d bytes for process %d from %d to %d\n", currentTime,
+                process->memsize, process->id, process->memoryNode->data->start, process->memoryNode->data->end);
+    else if (state == 1)
+        fprintf(outputFile, "At time %d freed %d bytes for process %d from %d to %d\n", currentTime,
+                process->memsize, process->id, process->memoryNode->data->start, process->memoryNode->data->end);
+
+        fclose(outputFile);
+
 }
