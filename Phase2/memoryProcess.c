@@ -100,6 +100,8 @@ void printWaitList() {
 
 void tryAllocateProcesses() {
     for (int i = 0; i < actualSize; i++) {
+        printf("Try to allocate process id = %d i = %d\n",waitList[i]->id,i);
+
         // Try to allocate process
         struct TNode *node = allocateMemory(memoryTree->root, waitList[i], waitList[i]->memsize);
 
@@ -114,6 +116,8 @@ void tryAllocateProcesses() {
 
             // remove process
             removeFromWaiList(waitList[i]);
+
+            i--;
         } else {
             // TODO: Testing
             printf("Process %d Cannot be allocated in memory\n", waitList[i]->id);
