@@ -38,24 +38,7 @@ void create_scheduler_perf();
 
 void createMemoryLog();
 
-struct ProcessStruct *create_process
-        (int id, int arrivalTime, int priority, int runTime,
-         bool running, bool startedBefore, int enterQueue,
-         int quitQueue, int executionTime, int waitingTime, int pid) {
-    struct ProcessStruct *process = (struct ProcessStruct *) malloc(sizeof(struct ProcessStruct));
-    process->id = id;
-    process->arrivalTime = arrivalTime;
-    process->priority = priority;
-    process->runTime = runTime;
-    process->running = running;
-    process->startedBefore = startedBefore;
-    process->enterQueue = enterQueue;
-    process->quitQueue = quitQueue;
-    process->executionTime = executionTime;
-    process->waitingTime = waitingTime;
-    process->pid = pid;
-    return process;
-}
+
 
 void intializeMessageQueue() {
     msgq_id = msgget(PROMEMSCH, 0666 | IPC_CREAT);
