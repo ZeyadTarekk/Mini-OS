@@ -24,8 +24,8 @@ void readFile(struct Queue *processQueue) {
     processesNum = 0;
     totalRunTime = 0;
     //read the first line (commented one)
-    char s[30];
-    fgets(s, 30, file);
+    char s[40];
+    fgets(s, 40, file);
 
     //start reading the file
     while (fscanf(file, "%d\t%d\t%d\t%d\t%d", &id, &arrivaltime, &runningtime, &priority, &memsize) != EOF) {
@@ -212,8 +212,8 @@ void clearResources(int signum) {
 
     //clear the message queue resources
     msgctl(msgq_id, IPC_RMID, (struct msqid_ds *) 0);
-    semctl(scheduler_pGenerator_sem, 0,IPC_RMID,(struct semid_ds *) 0);
+    semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (struct semid_ds *) 0);
 
     //clear the semaphores resources
-    semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (union Semun)0);
+    semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (union Semun) 0);
 }
