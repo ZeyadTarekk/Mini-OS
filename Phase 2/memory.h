@@ -32,10 +32,8 @@ void splitMemory(struct TNode *root) {
     insertRight(root, memRight);
 }
 
-// Function used to allocate memory for the sent process with the perfect size
-// Return NULL if there is no available memory at this moment
-struct TNode *allocateMemory(struct TNode *root, struct ProcessStruct *process, int powerOfTwo) {
-
+//Utility function
+struct TNode *__allocateMemory(struct TNode *root, struct ProcessStruct *process, int powerOfTwo) {
     // check if the root has no process and size is good --> then assign and return
     if ((root->data->hasProcess == true && (root->data->end - root->data->start + 1) == powerOfTwo)
         || (root->data->hasProcess == true && root->data->pid != -1)) {
@@ -65,6 +63,13 @@ struct TNode *allocateMemory(struct TNode *root, struct ProcessStruct *process, 
             else return leftBranch;
         }
     }
+}
+
+// Function used to allocate memory for the sent process with the perfect size
+// Return NULL if there is no available memory at this moment
+struct TNode *allocateMemory(struct TNode *root, struct ProcessStruct *process, int size) {
+    int powerOfTwo = getPowerOfTwo(size);
+    return __allocateMemory(root, process, powerOfTwo);
 }
 
 //Utility function
