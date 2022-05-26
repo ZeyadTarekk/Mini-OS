@@ -39,7 +39,6 @@ void create_scheduler_perf();
 void createMemoryLog();
 
 
-
 void intializeMessageQueue() {
     msgq_id = msgget(PROMEMSCH, 0666 | IPC_CREAT);
 
@@ -98,30 +97,30 @@ int main(int argc, char *argv[]) {
     memorypid = atoi(argv[4]);
 
     /////////////////////////////////////////////////
-//    switch (algorithm) {
-//        case 1:
-    // Allocate the priority queue
-//            priority_queue = createPriorityQueue();
-    // Call the algorithm function
-//            HPF(priority_queue);
+    switch (algorithm) {
+        case 1:
+            //Allocate the priority queue
+            priority_queue = createPriorityQueue();
 
-//            break;
-    //     case 2:
-    //         // Allocate the priority queue
-    //         priority_queue = createPriorityQueue();
-    //         // Call the algorithm function
-    //         SRTN(priority_queue);
+            //Call the algorithm function
+            HPF(priority_queue);
 
-    //         break;
-    //     case 3:
-    //         // Allocate the queue
-    //         queue = createQueue();
-    //         // Call the algorithm function
-    //         RR(2, queue);
-    //         break;
-//    }
-    while (flag) {
-        /* code */
+            break;
+        case 2:
+            // Allocate the priority queue
+            priority_queue = createPriorityQueue();
+
+            // Call the algorithm function
+            SRTN(priority_queue);
+
+            break;
+        case 3:
+            // Allocate the queue
+            queue = createQueue();
+
+            // Call the algorithm function
+            RR(2, queue);
+            break;
     }
 
 /////////////////////////////////////////////////
@@ -189,21 +188,21 @@ void getProcess(int signum) {
         perror("Error in receive");
     }
 
-    /////////////////////////////////////////////////
-//    switch (algorithm) {
-//        case 1:
-//             TODO: Add to [PRIORITY QUEUE] as HPF
-//            add_to_HPF_queue(message.process);
-//            break;
-    //     case 2:
-    //         // DONE: Add to priority queue as SRTN
-    //         add_to_SRTN_queue(message.process);
-    //         break;
-    //     case 3:
-    //         // DONE: Add to [QUEUE] as RR
-    //         add_to_RR_queue(message.process);
-    //         break;
-//    }
+    ///////////////////////////////////////////////
+    switch (algorithm) {
+        case 1:
+            //DONE: Add to [PRIORITY QUEUE] as HPF
+            add_to_HPF_queue(message.process);
+            break;
+        case 2:
+            // DONE: Add to priority queue as SRTN
+            add_to_SRTN_queue(message.process);
+            break;
+        case 3:
+            // DONE: Add to [QUEUE] as RR
+            add_to_RR_queue(message.process);
+            break;
+    }
     /////////////////////////////////////////////////
 
     // Process has been pushed to the queue
