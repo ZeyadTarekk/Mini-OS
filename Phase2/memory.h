@@ -4,6 +4,9 @@ Each process size is less than or equal 256 bytes.
 */
 
 #include "Tree.h"
+
+struct TNode *allocateMemory(struct TNode *, struct ProcessStruct *, int);
+
 //#include "structs.h"
 
 // Function used to get the first power of two that can fit the size
