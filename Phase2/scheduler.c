@@ -13,7 +13,7 @@ void print_process_info(const struct ProcessStruct *const, int);
 int msgq_id;
 int algorithm;
 int processesNum;
-int scheduler_pGenerator_sem;
+int memory_scheduler_sem;
 //variables for scheduler.perf file
 int totalRunTime;
 int totalWaitingTime = 0;
@@ -56,7 +56,7 @@ struct ProcessStruct *create_process
 }
 
 void intializeMessageQueue() {
-    msgq_id = msgget(PROSCH, 0666 | IPC_CREAT);
+    msgq_id = msgget(PROMEMSCH, 0666 | IPC_CREAT);
 
     if (msgq_id == -1) {
         perror("Error in create message queue");
@@ -64,13 +64,13 @@ void intializeMessageQueue() {
     }
 }
 
-void initializeSemaphore() {
+void initializeSemaphoreMemoryScheduler() {
 
     // Create a semaphore to synchronize the scheduler with process generator
-    scheduler_pGenerator_sem = semget(SEMA, 1, 0666 | IPC_CREAT);
+    memory_scheduler_sem = semget(SEMAMEMSCH, 1, 0666 | IPC_CREAT);
 
     // Check is semaphore id is -1
-    if (scheduler_pGenerator_sem == -1) {
+    if (memory_scheduler_sem == -1) {
         perror("Error in creating semaphores");
         exit(-1);
     }
@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
     // Create scheduler.log
     create_scheduler_log();
 
-//    Create memory.log
+    // Create memory.log
     createMemoryLog();
 
     //add signal handler to get the processes from process_generator
@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     initClk();
 
     //Initialize the semaphore
-    initializeSemaphore();
+    initializeSemaphoreMemoryScheduler();
 
     //Initialize the message queue
     intializeMessageQueue();
@@ -109,33 +109,43 @@ int main(int argc, char *argv[]) {
     //get the total run time of all processes
     totalRunTime = atoi(argv[3]);
 
-    switch (algorithm) {
-        case 1:
-            // Allocate the priority queue
-            priority_queue = createPriorityQueue();
-            // Call the algorithm function
-            HPF(priority_queue);
+    /////////////////////////////////////////////////
+    // switch (algorithm) {
+    //     case 1:
+    //         // Allocate the priority queue
+    //         priority_queue = createPriorityQueue();
+    //         // Call the algorithm function
+    //         HPF(priority_queue);
 
-            break;
-        case 2:
-            // Allocate the priority queue
-            priority_queue = createPriorityQueue();
-            // Call the algorithm function
-            SRTN(priority_queue);
+    //         break;
+    //     case 2:
+    //         // Allocate the priority queue
+    //         priority_queue = createPriorityQueue();
+    //         // Call the algorithm function
+    //         SRTN(priority_queue);
 
-            break;
-        case 3:
-            // Allocate the queue
-            queue = createQueue();
-            // Call the algorithm function
-            RR(2, queue);
-            break;
+    //         break;
+    //     case 3:
+    //         // Allocate the queue
+    //         queue = createQueue();
+    //         // Call the algorithm function
+    //         RR(2, queue);
+    //         break;
+    // }
+    while (flag)
+    {
+        /* code */
     }
+    
+    /////////////////////////////////////////////////
 
     printf("\n\n===================================scheduler Terminated at time = %d===================================\n\n",
            getClk());
 
     create_scheduler_perf();
+
+    // Clear the semaphores resources
+    semctl(memory_scheduler_sem, 0,IPC_RMID,(struct semid_ds *) 0);
 
     // Destroy your clock
     destroyClk(false);
@@ -180,32 +190,34 @@ void add_to_RR_queue(struct ProcessStruct process) {
 
 void getProcess(int signum) {
     //receive from the message queue and add to the ready queue
-    int rec_val = msgrcv(msgq_id, &message, sizeof(message.process), 7, !IPC_NOWAIT);
+    int rec_val = msgrcv(msgq_id, &message, sizeof(message.process), 8, !IPC_NOWAIT);
 
-    printf("message received: %d\n", message.process.id);
+    printf("message received in scheduler: %d\n\n", message.process.id);
     fflush(stdout);
     if (rec_val == -1) {
         perror("Error in receive");
     }
 
-    switch (algorithm) {
-        case 1:
-            // TODO: Add to [PRIORITY QUEUE] as HPF
-            add_to_HPF_queue(message.process);
-            break;
-        case 2:
-            // DONE: Add to priority queue as SRTN
-            add_to_SRTN_queue(message.process);
-            break;
-        case 3:
-            // DONE: Add to [QUEUE] as RR
-            add_to_RR_queue(message.process);
-            break;
-    }
+    /////////////////////////////////////////////////
+    // switch (algorithm) {
+    //     case 1:
+    //         // TODO: Add to [PRIORITY QUEUE] as HPF
+    //         add_to_HPF_queue(message.process);
+    //         break;
+    //     case 2:
+    //         // DONE: Add to priority queue as SRTN
+    //         add_to_SRTN_queue(message.process);
+    //         break;
+    //     case 3:
+    //         // DONE: Add to [QUEUE] as RR
+    //         add_to_RR_queue(message.process);
+    //         break;
+    // }
+    /////////////////////////////////////////////////
 
     // Process has been pushed to the queue
     // Up the semaphore to allow process generator to continue
-    up(scheduler_pGenerator_sem);
+    up(memory_scheduler_sem);
 
     //check if that process was the terminating one (id = -1)
     if (message.process.id == -1) {

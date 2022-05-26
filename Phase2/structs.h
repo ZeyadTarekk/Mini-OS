@@ -91,7 +91,9 @@ struct ProcessStruct
 /*
 Messages Type:
 ==============
-7 -> process from process_generator to schedular
+7 -> process from process_generator to memory to try to allocate
+8 -> process from memory to scheduler to run
+9 -> process from the scheduler to memory to deallocate
 */
 struct msgbuff
 {
