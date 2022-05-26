@@ -24,8 +24,9 @@ typedef short bool;
 
 //keys for ftok function
 #define SHKEY 300
-#define PROSCH 65
-#define SEMA 70
+#define PROMEMSCH 65
+#define SEMAMEMPRO 70
+#define SEMAMEMSCH 80
 
 ///==============================
 //don't mess with this variable//
