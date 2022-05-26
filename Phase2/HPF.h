@@ -38,6 +38,17 @@ void processFinishedHandler(int signum) {
     isRunning = false;
     currentRunningProcess->executionTime = currentRunningProcess->runTime;
     print_process_info(currentRunningProcess, 3);
+
+//    send the process to be deallocated
+    //send the process to memory process using the message queue
+    message.mtype = 9;
+    message.process = *currentRunningProcess;
+    int send_val = msgsnd(msgq_id, &message, sizeof(message.process), !IPC_NOWAIT);
+
+    printf("message sent from HPF: %d\n", message.process.id);
+    if (send_val == -1)
+        perror("Errror in send");
+    kill(memorypid, SIGUSR2);
     free(currentRunningProcess);
     signal(SIGUSR2, processFinishedHandler);
 }

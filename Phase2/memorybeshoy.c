@@ -11,7 +11,6 @@ struct msgbuff message;
 int schedulerpid;
 
 
-
 void intializeMessageQueue() {
     msgq_id = msgget(PROMEMSCH, 0666 | IPC_CREAT);
 
@@ -76,6 +75,7 @@ void sendStopProcess() {
 
 
 void getProcess(int);
+
 void deallocateHandler(int);
 
 
@@ -103,7 +103,7 @@ int main(int argc, char *argv[]) {
 
 
     while (/*condtion*/flag) {
-        
+
         // TODO: Logic here
 
 
@@ -130,7 +130,6 @@ int main(int argc, char *argv[]) {
     //to inform the schedular that there is no other processes coming
     sendStopProcess();
     kill(schedulerpid, SIGUSR1);
-    printf("calling down(memory_scheduler_sem)\n");
     down(memory_scheduler_sem);
 
     // Clear clock resources
@@ -146,37 +145,8 @@ void getProcess(int signum) {
     if (rec_val == -1) {
         perror("Error in receive");
     }
-
-
-
-
-
     // TODO: add the process to the waiting queue
-    if (message.process.id != -1)
-    {
-        printf("size of process: %d\n", message.process.memsize);
-    }
-    
-
-    //for testing 
-    struct ProcessStruct *process = &message.process;
-    sendProcess(process);
-
-    // TODO: send a signal to the schedular to be ready for the coming process
-    kill(schedulerpid, SIGUSR1);
-
-    // TODO: Down the semaphore to make sure that the scheduler has pushed the process to the queue
-    printf("calling down(memory_scheduler_sem)\n");
-    down(memory_scheduler_sem);
-
-
-
-
-
-
-
     // Up the semaphore to allow process generator to continue
-    printf("calling up(memory_pGenerator_sem)\n");
     up(memory_pGenerator_sem);
 
     //check if that process was the terminating one (id = -1)
@@ -185,7 +155,6 @@ void getProcess(int signum) {
         flag = 0;
     }
 }
-
 
 void deallocateHandler(int signum) {
 
@@ -201,4 +170,5 @@ void deallocateHandler(int signum) {
 
     // TODO: deallocate the memory of the received process
     //message.process.memoryNode
+    deAllocateMyMemory(&message.process);
 }

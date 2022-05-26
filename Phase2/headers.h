@@ -20,6 +20,7 @@ typedef short bool;
 #include "structs.h"
 #include "PQueue.h"
 #include "Queue.h"
+#include "Tree.h"
 #include "memory.h"
 
 //keys for ftok function
@@ -30,13 +31,12 @@ typedef short bool;
 
 ///==============================
 //don't mess with this variable//
-int * shmaddr;                 //
+int *shmaddr;                 //
 //===============================
 
 
 
-int getClk()
-{
+int getClk() {
     return *shmaddr;
 }
 
@@ -45,17 +45,15 @@ int getClk()
  * All process call this function at the beginning to establish communication between them and the clock module.
  * Again, remember that the clock is only emulation!
 */
-void initClk()
-{
+void initClk() {
     int shmid = shmget(SHKEY, 4, 0444);
-    while ((int)shmid == -1)
-    {
+    while ((int) shmid == -1) {
         //Make sure that the clock exists
         printf("Wait! The clock not initialized yet!\n");
         sleep(1);
         shmid = shmget(SHKEY, 4, 0444);
     }
-    shmaddr = (int *) shmat(shmid, (void *)0, 0);
+    shmaddr = (int *) shmat(shmid, (void *) 0, 0);
 }
 
 
@@ -67,11 +65,9 @@ void initClk()
  *                      It terminates the whole system and releases resources.
 */
 
-void destroyClk(bool terminateAll)
-{
+void destroyClk(bool terminateAll) {
     shmdt(shmaddr);
-    if (terminateAll)
-    {
+    if (terminateAll) {
         killpg(getpgrp(), SIGINT);
     }
 }
@@ -81,8 +77,7 @@ void destroyClk(bool terminateAll)
 // Semaphores
 
 /* arg for semctl system calls. */
-union Semun
-{
+union Semun {
     int val;               /* value for SETVAL */
     struct semid_ds *buf;  /* buffer for IPC_STAT & IPC_SET */
     ushort *array;         /* array for GETALL & SETALL */
@@ -90,31 +85,27 @@ union Semun
     void *__pad;
 };
 
-void down(int sem)
-{
+void down(int sem) {
     struct sembuf p_op;
 
     p_op.sem_num = 0;
     p_op.sem_op = -1;
     p_op.sem_flg = !IPC_NOWAIT;
 
-    if (semop(sem, &p_op, 1) == -1)
-    {
+    if (semop(sem, &p_op, 1) == -1) {
         perror("Error in down()");
         exit(-1);
     }
 }
 
-void up(int sem)
-{
+void up(int sem) {
     struct sembuf v_op;
 
     v_op.sem_num = 0;
     v_op.sem_op = 1;
     v_op.sem_flg = !IPC_NOWAIT;
 
-    if (semop(sem, &v_op, 1) == -1)
-    {
+    if (semop(sem, &v_op, 1) == -1) {
         perror("Error in up()");
         exit(-1);
     }

@@ -5,13 +5,11 @@ int flag = 1;
 
 void print_process_info(const struct ProcessStruct *const, int);
 
-#include "SRTN.h"
-#include "RR.h"
-#include "HPF.h"
 
 // global variables
 int msgq_id;
 int algorithm;
+int memorypid;
 int processesNum;
 int memory_scheduler_sem;
 //variables for scheduler.perf file
@@ -25,6 +23,10 @@ float STD;
 struct msgbuff message;
 struct PQueue *priority_queue;
 struct Queue *queue;
+
+#include "SRTN.h"
+#include "RR.h"
+#include "HPF.h"
 
 void getProcess(int);
 
@@ -109,15 +111,18 @@ int main(int argc, char *argv[]) {
     //get the total run time of all processes
     totalRunTime = atoi(argv[3]);
 
-    /////////////////////////////////////////////////
-    // switch (algorithm) {
-    //     case 1:
-    //         // Allocate the priority queue
-    //         priority_queue = createPriorityQueue();
-    //         // Call the algorithm function
-    //         HPF(priority_queue);
+    //get the memory process PID
+    memorypid = atoi(argv[4]);
 
-    //         break;
+    /////////////////////////////////////////////////
+//    switch (algorithm) {
+//        case 1:
+    // Allocate the priority queue
+//            priority_queue = createPriorityQueue();
+    // Call the algorithm function
+//            HPF(priority_queue);
+
+//            break;
     //     case 2:
     //         // Allocate the priority queue
     //         priority_queue = createPriorityQueue();
@@ -131,23 +136,26 @@ int main(int argc, char *argv[]) {
     //         // Call the algorithm function
     //         RR(2, queue);
     //         break;
-    // }
-    while (flag)
-    {
+//    }
+    while (flag) {
         /* code */
     }
-    
-    /////////////////////////////////////////////////
+
+/////////////////////////////////////////////////
 
     printf("\n\n===================================scheduler Terminated at time = %d===================================\n\n",
-           getClk());
+
+           getClk()
+
+    );
 
     create_scheduler_perf();
 
-    // Clear the semaphores resources
-    semctl(memory_scheduler_sem, 0,IPC_RMID,(struct semid_ds *) 0);
+// Clear the semaphores resources
+    semctl(memory_scheduler_sem,
+           0, IPC_RMID, (struct semid_ds *) 0);
 
-    // Destroy your clock
+// Destroy your clock
     destroyClk(false);
     return 0;
 }
@@ -199,11 +207,11 @@ void getProcess(int signum) {
     }
 
     /////////////////////////////////////////////////
-    // switch (algorithm) {
-    //     case 1:
-    //         // TODO: Add to [PRIORITY QUEUE] as HPF
-    //         add_to_HPF_queue(message.process);
-    //         break;
+//    switch (algorithm) {
+//        case 1:
+//             TODO: Add to [PRIORITY QUEUE] as HPF
+//            add_to_HPF_queue(message.process);
+//            break;
     //     case 2:
     //         // DONE: Add to priority queue as SRTN
     //         add_to_SRTN_queue(message.process);
@@ -212,7 +220,7 @@ void getProcess(int signum) {
     //         // DONE: Add to [QUEUE] as RR
     //         add_to_RR_queue(message.process);
     //         break;
-    // }
+//    }
     /////////////////////////////////////////////////
 
     // Process has been pushed to the queue
@@ -380,6 +388,6 @@ void printMemoryDetails(const struct ProcessStruct *const process, int state) {
         fprintf(outputFile, "At time %d freed %d bytes for process %d from %d to %d\n", currentTime,
                 process->memsize, process->id, process->memoryNode->data->start, process->memoryNode->data->end);
 
-        fclose(outputFile);
+    fclose(outputFile);
 
 }

@@ -140,7 +140,11 @@ int main(int argc, char *argv[]) {
         execv(args[0], args);
     }
 
+    int memorypid;
     int schedulerpid = fork();
+    if (schedulerpid != 0)
+        memorypid = fork();
+
     if (schedulerpid == 0) {
         //run the scheduler file
         int length = snprintf(NULL, 0, "%d", algorithm);
@@ -155,11 +159,14 @@ int main(int argc, char *argv[]) {
         char *totalRT = malloc(length + 1);
         snprintf(totalRT, length + 1, "%d", totalRunTime);
 
-        char *args[] = {"./scheduler.out", algo, procNum, totalRT, NULL};
+        length = snprintf(NULL, 0, "%d", memorypid);
+        char *memID = malloc(length + 1);
+        snprintf(memID, length + 1, "%d", memorypid);
+
+        char *args[] = {"./scheduler.out", algo, procNum, totalRT, memID, NULL};
         execv(args[0], args);
     }
 
-    int memorypid = fork();
     if (memorypid == 0) {
         //run the memory file
         int length = snprintf(NULL, 0, "%d", schedulerpid);
@@ -198,7 +205,6 @@ int main(int argc, char *argv[]) {
         kill(memorypid, SIGUSR1);
 
         // Down the semaphore to make sure that the scheduler has pushed the process to the queue
-        printf("calling down(memory_pGenerator_sem)\n");
         down(memory_pGenerator_sem);
 
         //remove it from the queue
@@ -208,8 +214,7 @@ int main(int argc, char *argv[]) {
     //send a process with id = -1
     //to inform the schedular that there is no other processes coming
     sendStopProcess();
-    kill(schedulerpid, SIGUSR1);
-    printf("calling down(memory_pGenerator_sem)\n");
+    kill(memorypid, SIGUSR1);
     down(memory_pGenerator_sem);
 
     //wait for the memory to finish before clearing the clock resources
@@ -231,5 +236,5 @@ void clearResources(int signum) {
     msgctl(msgq_id, IPC_RMID, (struct msqid_ds *) 0);
 
     // Clear the semaphores resources
-    semctl(memory_pGenerator_sem, 0,IPC_RMID,(struct semid_ds *) 0);
+    semctl(memory_pGenerator_sem, 0, IPC_RMID, (struct semid_ds *) 0);
 }
