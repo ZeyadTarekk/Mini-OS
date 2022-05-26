@@ -9,7 +9,7 @@ RR --> 3
 
 // global variables
 int msgq_id;
-int scheduler_pGenerator_sem;
+int memory_pGenerator_sem;
 int processesNum;
 int totalRunTime;
 struct msgbuff message;
@@ -69,7 +69,7 @@ int getSchedulingAlgorithm() {
 }
 
 void intializeMessageQueue() {
-    msgq_id = msgget(PROSCH, 0666 | IPC_CREAT);
+    msgq_id = msgget(PROMEMSCH, 0666 | IPC_CREAT);
 
     if (msgq_id == -1) {
         perror("Error in create message queue");
@@ -77,13 +77,13 @@ void intializeMessageQueue() {
     }
 }
 
-void initializeSemaphore() {
+void initializeSemaphoreMemoryProcessG() {
 
     // Create a semaphore to synchronize the scheduler with process generator
-    scheduler_pGenerator_sem = semget(SEMA, 1, 0666 | IPC_CREAT);
+    memory_pGenerator_sem = semget(SEMAMEMPRO, 1, 0666 | IPC_CREAT);
 
     // Check is semaphore id is -1
-    if (scheduler_pGenerator_sem == -1) {
+    if (memory_pGenerator_sem == -1) {
         perror("Error in creating semaphores");
         exit(-1);
     }
@@ -91,19 +91,19 @@ void initializeSemaphore() {
     // Initialize the semaphore
     union Semun semun;
     semun.val = 0;
-    if (semctl(scheduler_pGenerator_sem, 0, SETVAL, semun) == -1) {
-        perror("Error in internalizing scheduler_pGenerator_sem");
+    if (semctl(memory_pGenerator_sem, 0, SETVAL, semun) == -1) {
+        perror("Error in internalizing memory_pGenerator_sem");
         exit(-1);
     }
 }
 
 void sendProcess(struct ProcessStruct *process) {
-    //send the process to schedular using the message queue
+    //send the process to memory process using the message queue
     message.mtype = 7;
     message.process = *process;
     int send_val = msgsnd(msgq_id, &message, sizeof(message.process), !IPC_NOWAIT);
 
-    // printf("message sent: %d\n", message.process.id);
+    printf("message sent from process generator: %d\n", message.process.id);
     if (send_val == -1)
         perror("Errror in send");
 }
@@ -111,7 +111,6 @@ void sendProcess(struct ProcessStruct *process) {
 void sendStopProcess() {
     struct ProcessStruct *process = (struct ProcessStruct *) malloc(sizeof(struct ProcessStruct));
     process->id = -1;
-    printf("Sending process with -1\n");
     sendProcess(process);
 }
 
@@ -120,7 +119,7 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, clearResources);
 
     // Initialize the semaphore
-    initializeSemaphore();
+    initializeSemaphoreMemoryProcessG();
 
     //intialize the message queue
     intializeMessageQueue();
@@ -160,6 +159,18 @@ int main(int argc, char *argv[]) {
         execv(args[0], args);
     }
 
+    int memorypid = fork();
+    if (memorypid == 0) {
+        //run the memory file
+        int length = snprintf(NULL, 0, "%d", schedulerpid);
+        char *schedulerID = malloc(length + 1);
+        snprintf(schedulerID, length + 1, "%d", schedulerpid);
+
+        // TODO: change the .out file to final name
+        char *args[] = {"./memorybeshoy.out", schedulerID, NULL};
+        execv(args[0], args);
+    }
+
     // 4. Use this function after creating the clock process to initialize clock
     initClk();
 
@@ -184,10 +195,11 @@ int main(int argc, char *argv[]) {
         sendProcess(process);
 
         //send a signal to the schedular to be ready for the coming process
-        kill(schedulerpid, SIGUSR1);
+        kill(memorypid, SIGUSR1);
 
         // Down the semaphore to make sure that the scheduler has pushed the process to the queue
-        down(scheduler_pGenerator_sem);
+        printf("calling down(memory_pGenerator_sem)\n");
+        down(memory_pGenerator_sem);
 
         //remove it from the queue
         deQueue(processQueue);
@@ -197,23 +209,27 @@ int main(int argc, char *argv[]) {
     //to inform the schedular that there is no other processes coming
     sendStopProcess();
     kill(schedulerpid, SIGUSR1);
+    printf("calling down(memory_pGenerator_sem)\n");
+    down(memory_pGenerator_sem);
+
+    //wait for the memory to finish before clearing the clock resources
+    waitpid(memorypid, NULL, 0);
 
     //wait for the schedular to finish before clearing the clock resources
     waitpid(schedulerpid, NULL, 0);
 
-    printf("==================Process generator terminated======================\n");
+    printf("==================  Process generator terminated  ======================\n");
 
     // 7. Clear clock resources
     destroyClk(true);
 }
 
 void clearResources(int signum) {
-    //TODO Clears all resources in case of interruption
+    // Clears all resources in case of interruption
 
-    //clear the message queue resources
+    // Clear the message queue resources
     msgctl(msgq_id, IPC_RMID, (struct msqid_ds *) 0);
-    semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (struct semid_ds *) 0);
 
-    //clear the semaphores resources
-    semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (union Semun) 0);
+    // Clear the semaphores resources
+    semctl(memory_pGenerator_sem, 0,IPC_RMID,(struct semid_ds *) 0);
 }
