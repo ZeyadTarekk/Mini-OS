@@ -3,6 +3,7 @@
 
 //used to inform the memory that there is no other processes coming
 int flag = 1;
+int flagScheduler = 1;
 
 // global variables
 int memory_pGenerator_sem;
@@ -263,6 +264,7 @@ void getProcess(int);
 
 void deallocateHandler(int);
 
+void schedulerExitHandler(int);
 
 int main(int argc, char *argv[]) {
 
@@ -273,6 +275,8 @@ int main(int argc, char *argv[]) {
 
     //add signal handler to get the process from the scheduler to deallocate
     signal(SIGUSR2, deallocateHandler);
+
+    signal(SIGTSTP, schedulerExitHandler);
 
     // Initialize the semaphore
     initializeSemaphoreMemoryProcessG();
@@ -296,13 +300,16 @@ int main(int argc, char *argv[]) {
     // Dummy loop
     while (flag || actualSize != 0) {
     }
-    printf("Memory EXIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIt\n");
+
     //send a process with id = -1
     //to inform the schedular that there is no other processes coming
     sendStopProcess();
     kill(schedulerpid, SIGUSR1);
     down(memory_scheduler_sem);
 
+    while (flagScheduler) {}
+
+    printf("================= Memory process exit =================\n");
     // Clear clock resources
     destroyClk(false);
 }
@@ -334,6 +341,10 @@ void getProcess(int signum) {
     }
 }
 
+void schedulerExitHandler(int sigNum) {
+    flagScheduler = 0;
+}
+
 void deallocateHandler(int signum) {
 
     //receive from the message queue the process to deallocate
@@ -345,11 +356,12 @@ void deallocateHandler(int signum) {
         perror("Error in receive");
     }
 
-
+    printf("Try to deallocate\n");
     // DONE: deallocate the memory of the received process
     //message.process.memoryNode
     deAllocateMyMemory(&message.process);
 
+    printf("After deallocate\n");
     // Try to allocate processes
     tryAllocateProcesses();
 }

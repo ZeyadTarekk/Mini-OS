@@ -122,7 +122,7 @@ int main(int argc, char *argv[]) {
             RR(2, queue);
             break;
     }
-
+    kill(memorypid, SIGTSTP);
 /////////////////////////////////////////////////
 
     printf("\n\n===================================scheduler Terminated at time = %d===================================\n\n",

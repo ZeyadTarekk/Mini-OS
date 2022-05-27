@@ -66,6 +66,17 @@ void __SRTN_process_finish_handler(int signum) {
     // DONE: Free allocated memory
     enQueue(finished_processes, __running_process);
 
+    //    send the process to be deallocated
+    //send the process to memory process using the message queue
+//    message.mtype = 9;
+//    message.process = *__running_process;
+//    int send_val = msgsnd(msgq_id, &message, sizeof(message.process), !IPC_NOWAIT);
+//
+//    printf("message sent from SRTN: %d\n", message.process.id);
+//    if (send_val == -1)
+//        perror("Error in send");
+//    kill(memorypid, SIGUSR2);
+
     // DONE: set __running_process to NULL
     __running_process = NULL;
 }
