@@ -110,7 +110,7 @@ void printWaitList() {
 
 void tryAllocateProcesses() {
     for (int i = 0; i < actualSize; i++) {
-        //printf("Try to allocate process id = %d i = %d\n", waitList[i]->id, i);
+        printf("Try to allocate process id = %d i = %d\n", waitList[i]->id, i);
 
         // Try to allocate process
         struct TNode *node = allocateMemory(memoryTree->root, waitList[i], waitList[i]->memsize);
@@ -143,6 +143,7 @@ void tryAllocateProcesses() {
             printf("Process %d Cannot be allocated in memory\n", waitList[i]->id);
         }
     }
+    printf("After allocate\n");
 }
 
 
@@ -294,14 +295,13 @@ int main(int argc, char *argv[]) {
 
     // Dummy loop
     while (flag || actualSize != 0) {
-        tryAllocateProcesses();
     }
     printf("Memory EXIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIt\n");
     //send a process with id = -1
     //to inform the schedular that there is no other processes coming
     sendStopProcess();
     kill(schedulerpid, SIGUSR1);
-    //down(memory_scheduler_sem);
+    down(memory_scheduler_sem);
 
     // Clear clock resources
     destroyClk(false);
@@ -319,16 +319,14 @@ void getProcess(int signum) {
     // TODO: add the process to the waiting queue
     if (message.process.id != -1) {
         addToWaitList(&message.process);
-    } else {
-        sendStopProcess();
-        kill(schedulerpid, SIGUSR1);
     }
+
+    // Try to allocate processes
+    tryAllocateProcesses();
+
     // Up the semaphore to allow process generator to continue
-    printf("before up\n");
-    fflush(stdout);
     up(memory_pGenerator_sem);
-    printf("After up\n");
-    fflush(stdout);
+
     //check if that process was the terminating one (id = -1)
     if (message.process.id == -1) {
         printf("Change the flag\n");
@@ -351,4 +349,7 @@ void deallocateHandler(int signum) {
     // DONE: deallocate the memory of the received process
     //message.process.memoryNode
     deAllocateMyMemory(&message.process);
+
+    // Try to allocate processes
+    tryAllocateProcesses();
 }
