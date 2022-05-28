@@ -1,4 +1,7 @@
 #include "headers.h"
+
+int algorithm;
+
 #include "memoryProcess.h"
 
 //used to inform the scheduler that there is no other processes coming
@@ -9,13 +12,14 @@ int checkMemoryFlag = 1;
 
 void print_process_info(const struct ProcessStruct *const, int);
 
+void printQueue(int);
+
 #include "SRTN.h"
 #include "RR.h"
 #include "HPF.h"
 
 // global variables
 int msgq_id;
-int algorithm;
 int processesNum;
 int scheduler_pGenerator_sem;
 //variables for scheduler.perf file
@@ -32,7 +36,6 @@ struct Queue *queue;
 
 void getProcess(int);
 
-void printQueue(int);
 
 void create_scheduler_log();
 
@@ -89,7 +92,9 @@ int main(int argc, char *argv[]) {
     memoryTree = createMemoryTree(memorySize);
 
     // Allocate the waitList
-    waitList = malloc(MAXSIZE * sizeof(struct ProcessStruct *));
+//    waitList = malloc(MAXSIZE * sizeof(struct ProcessStruct *));
+    waitPriorityQueue = createPriorityQueue();
+    waitQueue = createQueue();
 
     //get the algorithm number
     algorithm = atoi(argv[1]);
@@ -198,7 +203,7 @@ void getProcess(int signum) {
     }
 
     // TODO: MEMORY
-    if(message.process.id != -1) {
+    if (message.process.id != -1) {
         add_to_wait_list(message.process);
         printWaitList();
     }
@@ -233,11 +238,13 @@ void getProcess(int signum) {
 
 void printQueue(int sigNum) {
     printf("I have recieved signal %d\n", sigNum);
+    printf("Start\n");
     struct PQNode *start = priority_queue->head;
     while (start != NULL) {
         __SRTN_print_process_info(start->data);
         start = start->next;
     }
+    printf("End\n");
 }
 
 void create_scheduler_log() {

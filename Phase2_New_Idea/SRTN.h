@@ -311,14 +311,15 @@ void SRTN(struct PQueue *priority_queue) {
 
     int lastPid = -1;
     /*TODO: There still processes in the Queue or there still processes will be received*/
-    while (flag || isEmpty(priority_queue) == false || __running_process != NULL) {
+    while (flag || isEmpty(priority_queue) == false || __running_process != NULL || isEmpty(waitPriorityQueue) == false) {
 
         // TODO: MEMORY
         if (checkMemoryFlag == 1) {
             printf("=========================checkMemoryFlag===========================\n");
             struct Queue *dummy;
-            tryAllocateProcesses(priority_queue,dummy,1);
+            tryAllocateProcessesPriorityQueue(priority_queue);
             checkMemoryFlag = 0;
+            printQueue(0);
         }
 
         // DONE: Check if the queue is empty
