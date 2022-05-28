@@ -3,7 +3,7 @@
 
 //used to inform the memory that there is no other processes coming
 int flag = 1;
-int flagScheduler = 1;
+// int flagScheduler = 1;
 
 // global variables
 int memory_pGenerator_sem;
@@ -114,14 +114,15 @@ void tryAllocateProcesses() {
         printf("Try to allocate process id = %d i = %d\n", waitList[i]->id, i);
 
         // Try to allocate process
-        struct TNode *node = allocateMemory(memoryTree->root, waitList[i], waitList[i]->memsize);
+        struct TNode *node = allocateMemory(memoryTree->root, waitList[i]->id, waitList[i]->memsize);
 
         if (node != NULL) {
             // DONE: Testing
             printf("Process %d has been allocated in memory\n", waitList[i]->id);
 
-            // Assign tree node to that of process struct
-            waitList[i]->memoryNode = node;
+            // Add the start and end address to process
+            waitList[i]->start = node->data->start;
+            waitList[i]->end = node->data->end;
 
             // TODO: Send process to scheduler [BESHOY]
             // TODO: put the process in the message queue
@@ -139,12 +140,15 @@ void tryAllocateProcesses() {
             removeFromWaiList(waitList[i]);
 
             i--;
+
+            // print the memory tree to check the allocation function
+            printTree(memoryTree->root);
+
         } else {
             // TODO: Testing
             printf("Process %d Cannot be allocated in memory\n", waitList[i]->id);
         }
     }
-    printf("After allocate\n");
 }
 
 
@@ -264,8 +268,6 @@ void getProcess(int);
 
 void deallocateHandler(int);
 
-void schedulerExitHandler(int);
-
 int main(int argc, char *argv[]) {
 
     initClk();
@@ -276,8 +278,6 @@ int main(int argc, char *argv[]) {
     //add signal handler to get the process from the scheduler to deallocate
     signal(SIGUSR2, deallocateHandler);
 
-    signal(SIGTSTP, schedulerExitHandler);
-
     // Initialize the semaphore
     initializeSemaphoreMemoryProcessG();
     initializeSemaphoreMemoryScheduler();
@@ -285,10 +285,35 @@ int main(int argc, char *argv[]) {
     //intialize the message queue
     intializeMessageQueue();
 
-    //get the scheduler process id
-    schedulerpid = atoi(argv[1]);
 
-    // Intialize the waiting queue
+    //get the algorithm number
+    int algorithm = atoi(argv[1]);
+
+    //get the total number of the processes
+    int processesNum = atoi(argv[2]);
+
+    //get the total run time of all processes
+    int totalRunTime = atoi(argv[3]);
+
+
+    schedulerpid = fork();
+    if (schedulerpid == 0) {
+        //run the scheduler file
+        int length = snprintf(NULL, 0, "%d", algorithm);
+        char *algo = malloc(length + 1);
+        snprintf(algo, length + 1, "%d", algorithm);
+
+        length = snprintf(NULL, 0, "%d", processesNum);
+        char *procNum = malloc(length + 1);
+        snprintf(procNum, length + 1, "%d", processesNum);
+
+        length = snprintf(NULL, 0, "%d", totalRunTime);
+        char *totalRT = malloc(length + 1);
+        snprintf(totalRT, length + 1, "%d", totalRunTime);
+
+        char *args[] = {"./scheduler.out", algo, procNum, totalRT, NULL};
+        execv(args[0], args);
+    }
 
     // Allocate memory tree
     memoryTree = createMemoryTree(memorySize);
@@ -307,12 +332,18 @@ int main(int argc, char *argv[]) {
     kill(schedulerpid, SIGUSR1);
     down(memory_scheduler_sem);
 
-    while (flagScheduler) {}
+    //wait for the schedular to finish before clearing the resources
+    waitpid(schedulerpid, NULL, 0);
+
+    // Clear the semaphores resources
+    semctl(memory_scheduler_sem, 0, IPC_RMID, (struct semid_ds *) 0);
 
     printf("================= Memory process exit =================\n");
     // Clear clock resources
     destroyClk(false);
+    return 0;
 }
+
 
 void getProcess(int signum) {
     //receive from the message queue and add to the waiting queue
@@ -336,14 +367,10 @@ void getProcess(int signum) {
 
     //check if that process was the terminating one (id = -1)
     if (message.process.id == -1) {
-        printf("Change the flag\n");
         flag = 0;
     }
 }
 
-void schedulerExitHandler(int sigNum) {
-    flagScheduler = 0;
-}
 
 void deallocateHandler(int signum) {
 
@@ -356,12 +383,15 @@ void deallocateHandler(int signum) {
         perror("Error in receive");
     }
 
-    printf("Try to deallocate\n");
-    // DONE: deallocate the memory of the received process
-    //message.process.memoryNode
-    deAllocateMyMemory(&message.process);
+    // deallocate the memory of the received process
+    deAllocateMyMemory(memoryTree->root, message.process.id);
 
-    printf("After deallocate\n");
+    //print the memory tree to check the deallocation function
+    printTree(memoryTree->root);
+
+    // Up the semaphore to allow scheduler to continue
+    up(memory_scheduler_sem);
+
     // Try to allocate processes
     tryAllocateProcesses();
 }

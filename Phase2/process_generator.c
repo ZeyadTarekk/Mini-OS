@@ -42,7 +42,8 @@ void readFile(struct Queue *processQueue) {
         p->waitingTime = 0;
         p->pid = -1;
         p->memsize = memsize;
-        p->memoryNode = NULL;
+        p->start = -1;
+        p->end = -1;
 
         processesNum++;
         totalRunTime += runningtime;
@@ -140,13 +141,15 @@ int main(int argc, char *argv[]) {
         execv(args[0], args);
     }
 
-    int memorypid;
-    int schedulerpid = fork();
-    if (schedulerpid != 0)
-        memorypid = fork();
+    int memorypid = fork();
+    if (memorypid == 0) {
+        //run the memory file
+        // int length = snprintf(NULL, 0, "%d", schedulerpid);
+        // char *schedulerID = malloc(length + 1);
+        // snprintf(schedulerID, length + 1, "%d", schedulerpid);
 
-    if (schedulerpid == 0) {
-        //run the scheduler file
+        // TODO: change the .out file to final name
+        // char *args[] = {"./memoryProcess.out", schedulerID, NULL};
         int length = snprintf(NULL, 0, "%d", algorithm);
         char *algo = malloc(length + 1);
         snprintf(algo, length + 1, "%d", algorithm);
@@ -159,22 +162,8 @@ int main(int argc, char *argv[]) {
         char *totalRT = malloc(length + 1);
         snprintf(totalRT, length + 1, "%d", totalRunTime);
 
-        length = snprintf(NULL, 0, "%d", memorypid);
-        char *memID = malloc(length + 1);
-        snprintf(memID, length + 1, "%d", memorypid);
+        char *args[] = {"./memoryProcess.out", algo, procNum, totalRT, NULL};
 
-        char *args[] = {"./scheduler.out", algo, procNum, totalRT, memID, NULL};
-        execv(args[0], args);
-    }
-
-    if (memorypid == 0) {
-        //run the memory file
-        int length = snprintf(NULL, 0, "%d", schedulerpid);
-        char *schedulerID = malloc(length + 1);
-        snprintf(schedulerID, length + 1, "%d", schedulerpid);
-
-        // TODO: change the .out file to final name
-        char *args[] = {"./memoryProcess.out", schedulerID, NULL};
         execv(args[0], args);
     }
 
@@ -215,13 +204,10 @@ int main(int argc, char *argv[]) {
     //to inform the schedular that there is no other processes coming
     sendStopProcess();
     kill(memorypid, SIGUSR1);
-    //down(memory_pGenerator_sem);
+    down(memory_pGenerator_sem);
 
     //wait for the memory to finish before clearing the clock resources
     waitpid(memorypid, NULL, 0);
-
-    //wait for the schedular to finish before clearing the clock resources
-    waitpid(schedulerpid, NULL, 0);
 
     printf("==================  Process generator terminated  ======================\n");
 

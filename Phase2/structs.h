@@ -82,8 +82,12 @@ struct ProcessStruct
     // The real id of forked process
     int pid;
 
-    // Pointer to the TNode allocated for this process
-    struct TNode *memoryNode;
+    // Start of memory [0 : 1023 - min limit ]
+    // Min limit is initially defined with 8
+    int start;
+
+    // End of memory [0 + min limit : 1023]
+    int end;
 
 };
 

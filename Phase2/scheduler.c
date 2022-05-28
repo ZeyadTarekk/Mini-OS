@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
     totalRunTime = atoi(argv[3]);
 
     //get the memory process PID
-    memorypid = atoi(argv[4]);
+    memorypid = getppid();
 
     /////////////////////////////////////////////////
     switch (algorithm) {
@@ -122,22 +122,15 @@ int main(int argc, char *argv[]) {
             RR(2, queue);
             break;
     }
-    kill(memorypid, SIGTSTP);
-/////////////////////////////////////////////////
+    /////////////////////////////////////////////////
 
     printf("\n\n===================================scheduler Terminated at time = %d===================================\n\n",
-
            getClk()
-
     );
 
     create_scheduler_perf();
 
-// Clear the semaphores resources
-    semctl(memory_scheduler_sem,
-           0, IPC_RMID, (struct semid_ds *) 0);
-
-// Destroy your clock
+    // Destroy your clock
     destroyClk(false);
     return 0;
 }
@@ -365,10 +358,10 @@ void printMemoryDetails(const struct ProcessStruct *const process, int state) {
 //    At time 6 freed 200 bytes from process 2 from 256 t o 383
     if (state == 0)
         fprintf(outputFile, "At time %d allocated %d bytes for process %d from %d to %d\n", currentTime,
-                process->memsize, process->id, process->memoryNode->data->start, process->memoryNode->data->end);
+                process->memsize, process->id, process->start, process->end);
     else if (state == 1)
         fprintf(outputFile, "At time %d freed %d bytes for process %d from %d to %d\n", currentTime,
-                process->memsize, process->id, process->memoryNode->data->start, process->memoryNode->data->end);
+                process->memsize, process->id, process->start, process->end);
 
     fclose(outputFile);
 
