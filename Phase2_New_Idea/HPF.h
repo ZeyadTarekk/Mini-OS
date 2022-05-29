@@ -44,7 +44,7 @@ void processFinishedHandler(int signum) {
     print_process_info(currentRunningProcess, 3);
     printMemoryDetails(currentRunningProcess, 1);
     deAllocateMyMemory(currentRunningProcess);
-    checkMemoryFlag = 1;
+    checkMemoryFlag++;
     free(currentRunningProcess);
     signal(SIGUSR2, processFinishedHandler);
 }
@@ -57,10 +57,10 @@ void HPF(struct PQueue *pq) {
     printf("HPF Started\n");
     processesQueue = pq;
     while (flag || !isEmpty(processesQueue) || isRunning || isEmpty(waitPriorityQueue) == false) {
-        if (checkMemoryFlag == 1) {
+        if (checkMemoryFlag >= 1) {
 //            printf("=========================checkMemoryFlag===========================\n");
             tryAllocateProcessesPriorityQueue(processesQueue);
-            checkMemoryFlag = 0;
+            checkMemoryFlag--;
 //            printQueue(0);
         }
         if (isEmpty(processesQueue))
