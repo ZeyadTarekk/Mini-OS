@@ -1,3 +1,29 @@
+/*
+HOW TO USE:
+===========
+
+struct ProcessStruct* p1 = (struct ProcessStruct*)malloc(sizeof(struct ProcessStruct));
+
+*create the queue and insert elements in it
+===========================================
+struct PQueue* q = createPriorityQueue();
+push(q, p1, 1);
+            priority
+
+*check if the queue is empty
+============================
+isEmpty(q)
+
+*get the first element in the queue
+===================================
+struct ProcessStruct* p = peek(q);
+
+*** don't forget to call pop(q) after finish playing with (p)
+
+*/
+
+
+
 // Function to create an empty queue
 struct PQueue* createPriorityQueue()
 {
@@ -72,27 +98,3 @@ bool isEmpty(struct PQueue* q)
 {
     return q->head == NULL;
 }
-
-/*
-HOW TO USE:
-===========
-
-struct ProcessStruct* p1 = (struct ProcessStruct*)malloc(sizeof(struct ProcessStruct));
-
-*create the queue and insert elements in it
-===========================================
-struct PQueue* q = createPriorityQueue();
-push(q, p1, 1);
-            priority
-
-*check if the queue is empty
-============================
-isEmpty(q)
-
-*get the first element in the queue
-===================================
-struct ProcessStruct* p = peek(q);
-
-*** don't forget to call pop(q) after finish playing with (p)
-
-*/

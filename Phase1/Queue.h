@@ -1,3 +1,28 @@
+/*
+HOW TO USE:
+===========
+
+struct ProcessStruct* p1 = (struct ProcessStruct*)malloc(sizeof(struct ProcessStruct));
+
+*create the queue and insert elements in it
+===========================================
+struct Queue* q = createQueue();
+enQueue(q, p1);
+
+*check if the queue is empty
+============================
+isEmptyN(q)
+
+*get the first element in the queue
+===================================
+struct ProcessStruct* p = peekN(q);
+
+*** don't forget to call deQueue(q) after finish playing with (p)
+
+*/
+
+
+
 // Function to create an empty queue
 struct Queue* createQueue()
 {
@@ -62,28 +87,3 @@ bool isEmptyN(struct Queue* q)
 {
     return q->front == NULL;
 }
-
-
-
-/*
-HOW TO USE:
-===========
-
-struct ProcessStruct* p1 = (struct ProcessStruct*)malloc(sizeof(struct ProcessStruct));
-
-*create the queue and insert elements in it
-===========================================
-struct Queue* q = createQueue();
-enQueue(q, p1);
-
-*check if the queue is empty
-============================
-isEmptyN(q)
-
-*get the first element in the queue
-===================================
-struct ProcessStruct* p = peekN(q);
-
-*** don't forget to call deQueue(q) after finish playing with (p)
-
-*/

@@ -14,6 +14,7 @@ int msgq_id;
 int algorithm;
 int processesNum;
 int scheduler_pGenerator_sem;
+
 //variables for scheduler.perf file
 int totalRunTime;
 int totalWaitingTime = 0;
@@ -27,7 +28,7 @@ struct PQueue *priority_queue;
 struct Queue *queue;
 
 void getProcess(int);
-
+//ToBeRemoved
 void printQueue(int);
 
 void create_scheduler_log();
@@ -80,6 +81,7 @@ int main(int argc, char *argv[]) {
     //add signal handler to get the processes from process_generator
     signal(SIGUSR1, getProcess);
 
+//ToBeRemoved
     //for testing
     signal(SIGTRAP, printQueue);
 
@@ -207,7 +209,7 @@ void getProcess(int signum) {
         flag = 0;
     }
 }
-
+//ToBeRemoved
 void printQueue(int sigNum) {
     printf("I have recieved signal %d\n", sigNum);
     struct PQNode *start = priority_queue->head;
