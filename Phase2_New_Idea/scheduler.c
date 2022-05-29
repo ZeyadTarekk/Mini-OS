@@ -9,11 +9,13 @@ void printMemoryDetails(const struct ProcessStruct *const process, int state);
 //used to inform the scheduler that there is no other processes coming
 int flag = 1;
 
-// TODO: MEMORY
-int checkMemoryFlag = 1;
+// Flag used to check if we need to allocate a memory for a process
+int checkMemoryFlag = 0;
 
 void print_process_info(const struct ProcessStruct *const, int);
 
+
+//ToBeRemoved
 void printQueue(int);
 
 #include "SRTN.h"
@@ -24,6 +26,7 @@ void printQueue(int);
 int msgq_id;
 int processesNum;
 int scheduler_pGenerator_sem;
+
 //variables for scheduler.perf file
 int totalRunTime;
 int totalWaitingTime = 0;
@@ -37,7 +40,6 @@ struct PQueue *priority_queue;
 struct Queue *queue;
 
 void getProcess(int);
-
 
 void create_scheduler_log();
 
@@ -77,6 +79,7 @@ int main(int argc, char *argv[]) {
     //add signal handler to get the processes from process_generator
     signal(SIGUSR1, getProcess);
 
+//ToBeRemoved
     //for testing
     signal(SIGTRAP, printQueue);
 
@@ -93,8 +96,9 @@ int main(int argc, char *argv[]) {
     // Allocate memory tree
     memoryTree = createMemoryTree(memorySize);
 
-    // Allocate the waitList
+//ToBeRemoved
 //    waitList = malloc(MAXSIZE * sizeof(struct ProcessStruct *));
+    // Allocate the waitLists
     waitPriorityQueue = createPriorityQueue();
     waitQueue = createQueue();
 
@@ -140,6 +144,8 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+
+//ToBeRemoved
 void add_to_SRTN_queue(struct ProcessStruct process) {
     if (process.id != -1) {
         // Push to the queue and the priority is the runTime (The remaining time at the beginning)
@@ -151,7 +157,7 @@ void add_to_SRTN_queue(struct ProcessStruct process) {
         push(priority_queue, newProcess, newProcess->runTime);
     }
 }
-
+//ToBeRemoved
 void add_to_HPF_queue(struct ProcessStruct process) {
     if (process.id != -1) {
         // Push to the queue and the priority is the priority (The priority of the process)
@@ -164,7 +170,7 @@ void add_to_HPF_queue(struct ProcessStruct process) {
         push(priority_queue, newProcess, newProcess->priority);
     }
 }
-
+//ToBeRemoved
 void add_to_RR_queue(struct ProcessStruct process) {
     if (process.id != -1) {
         // enqueue (The remaining time at the beginning)
@@ -178,7 +184,7 @@ void add_to_RR_queue(struct ProcessStruct process) {
     }
 }
 
-// TODO: MEMORY
+// Add to memory waiting list
 void add_to_wait_list(struct ProcessStruct process) {
     if (process.id != -1) {
         // enqueue (The remaining time at the beginning)
@@ -196,6 +202,7 @@ void getProcess(int signum) {
     //receive from the message queue and add to the ready queue
     int rec_val = msgrcv(msgq_id, &message, sizeof(message.process), 7, !IPC_NOWAIT);
 
+//ToBeRemoved
 //    __SRTN_print_process_info(&message.process);
 
     printf("message received: %d\n", message.process.id);
@@ -204,12 +211,10 @@ void getProcess(int signum) {
         perror("Error in receive");
     }
 
-    // TODO: MEMORY
-    if (message.process.id != -1) {
-        add_to_wait_list(message.process);
-        printWaitList();
-    }
+    add_to_wait_list(message.process);
+    printWaitList();
 
+//ToBeRemoved
 //    switch (algorithm) {
 //        case 1:
 //            // DONE: Add to [PRIORITY QUEUE] as HPF
@@ -386,6 +391,8 @@ void printMemoryDetails(const struct ProcessStruct *const process, int state) {
         exit(-1);
     }
 
+
+//ToBeRemoved
 //    At time 3 allocated 200 bytes for process 2 from 256 t o 383
 //    At time 6 freed 200 bytes from process 2 from 256 t o 383
     if (state == 0)

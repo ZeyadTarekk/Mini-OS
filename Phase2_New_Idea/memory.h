@@ -5,8 +5,8 @@ Each process size is less than or equal 256 bytes.
 
 #include "Tree.h"
 
-struct TNode *allocateMemory(struct TNode *, struct ProcessStruct *, int);
-
+//ToBeRemoved
+// struct TNode *allocateMemory(struct TNode *, struct ProcessStruct *, int);
 //#include "structs.h"
 
 // Function used to get the first power of two that can fit the size
@@ -53,16 +53,16 @@ struct TNode *__allocateMemory(struct TNode *root, struct ProcessStruct *process
         if (root->data->hasProcess == false) {
             root->data->hasProcess = true;
             splitMemory(root);
-            return allocateMemory(root->leftChild, process, powerOfTwo);
+            return __allocateMemory(root->leftChild, process, powerOfTwo);
         } else {
             //root have a running process
             //need to check the left branch first then check the right one
             if (root->leftChild == NULL)
                 splitMemory(root);
 
-            struct TNode *leftBranch = allocateMemory(root->leftChild, process, powerOfTwo);
+            struct TNode *leftBranch = __allocateMemory(root->leftChild, process, powerOfTwo);
             if (leftBranch == NULL)
-                return allocateMemory(root->rightChild, process, powerOfTwo);
+                return __allocateMemory(root->rightChild, process, powerOfTwo);
             else return leftBranch;
         }
     }
@@ -77,39 +77,41 @@ struct TNode *allocateMemory(struct TNode *root, struct ProcessStruct *process, 
 
 //Utility function
 void __deAllocateMemory(struct TNode *memoryNodeToFree) {
-//    Check if the node is null
+    // Check if the node is null
     if (memoryNodeToFree == NULL)
         return;
 
-//    first save the parent in a pointer
+    // first save the parent in a pointer
     struct TNode *myParent = memoryNodeToFree->parent;
-//    then free my memory process
-//    TODO I need the id not the pid to print it
+    // then free my memory process
+
+//ToBeRemoved
     printf("deallocating memory from process with PID %d from: %d to: %d\n", memoryNodeToFree->data->pid,
            memoryNodeToFree->data->start, memoryNodeToFree->data->end);
+    
     int oldPid = memoryNodeToFree->data->pid;
     memoryNodeToFree->data->hasProcess = false;
     memoryNodeToFree->data->pid = -1;
-//    Check if i don't have a parent ( 1024 memory size )
+    // Check if i don't have a parent ( 1024 memory size )
     if (myParent == NULL)
         return;
-//    get my sibling
+    // get my sibling
     struct TNode *mySibling;
     if (myParent->leftChild == memoryNodeToFree) {
         mySibling = myParent->rightChild;
-//        printf("RIGHT\n");
     } else {
         mySibling = myParent->leftChild;
-//        printf("LEFT\n");
     }
+
     if (mySibling->data->hasProcess == false) {
+//ToBeRemoved
         printf("My sibling is free, my pid: %d\n", oldPid);
-//        free(memoryNodeToFree);
-//        free(mySibling);
+        myParent->leftChild = NULL;
+        myParent->rightChild = NULL;
+        free(memoryNodeToFree);
+        free(mySibling);
         __deAllocateMemory(myParent);
     }
-
-
 }
 
 //Function to be used by the scheduler

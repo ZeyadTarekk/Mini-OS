@@ -8,6 +8,7 @@ const int memorySize = 1024;
 
 /**************************************** WaitList start ****************************************/
 
+//ToBeRemoved
 // Max size of the waitList
 //const int MAXSIZE = 10000;
 
@@ -28,6 +29,7 @@ struct Queue *waitQueue;
  * */
 void addToWaitList(const struct ProcessStruct *const process) {
     // Make sure that the actual size not equals maxsize
+//ToBeRemoved
 //    assert(actualSize != MAXSIZE);
     printf("Process add to wait list\n");
     // Allocate the process
@@ -51,9 +53,12 @@ void addToWaitList(const struct ProcessStruct *const process) {
             enQueue(waitQueue, newProcess);
             break;
     }
+//ToBeRemoved
     printf("end Process add to wait list\n");
 }
 
+
+//ToBeRemoved
 /*
  * INPUT       : process
  * OUTPUT      : Index of process
@@ -89,6 +94,7 @@ void addToWaitList(const struct ProcessStruct *const process) {
 //    actualSize--;
 //}
 
+//ToBeRemoved
 void printWaitList() {
     struct PQNode *tempHead = waitPriorityQueue->head;
     while (tempHead) {
@@ -98,6 +104,7 @@ void printWaitList() {
 }
 
 void removeFromWaitPriorityQueue(struct PQNode *node) {
+//ToBeRemoved edit all printf
     printf("Reeeeeeeeeeeeeecived Process %d has been allocated in memory\n", node->data->id);
 
     struct PQNode *tempHead = waitPriorityQueue->head;
@@ -120,6 +127,7 @@ void removeFromWaitPriorityQueue(struct PQNode *node) {
 }
 
 void removeFromWaitQueue(struct QNode *node) {
+//ToBeRemoved edit all printf
     printf("Reeeeeeeeeeeeeecived Process %d has been allocated in memory\n", node->data->id);
 
     struct QNode *tempHead = waitQueue->front;
@@ -142,6 +150,7 @@ void removeFromWaitQueue(struct QNode *node) {
 }
 
 void tryAllocateProcessesPriorityQueue(struct PQueue *priority_queue) {
+//ToBeRemoved edit all printf
     struct PQNode *tempHead = waitPriorityQueue->head;
     while (tempHead != NULL) {
         // Try to allocate process
@@ -202,6 +211,8 @@ void tryAllocateProcessesQueue(struct Queue *queue) {
 }
 /**************************************** WaitList end ****************************************/
 
+
+//ToBeRemoved
 /*
  * INPUT       : NONE
  * OUTPUT      : NONE

@@ -103,6 +103,7 @@ void sendProcess(struct ProcessStruct *process) {
     message.process = *process;
     int send_val = msgsnd(msgq_id, &message, sizeof(message.process), !IPC_NOWAIT);
 
+//ToBeRemoved
     // printf("message sent: %d\n", message.process.id);
     if (send_val == -1)
         perror("Errror in send");
@@ -111,7 +112,8 @@ void sendProcess(struct ProcessStruct *process) {
 void sendStopProcess() {
     struct ProcessStruct *process = (struct ProcessStruct *) malloc(sizeof(struct ProcessStruct));
     process->id = -1;
-    printf("Sending process with -1\n");
+//ToBeRemoved
+    // printf("Sending process with -1\n");
     sendProcess(process);
 }
 
@@ -213,7 +215,4 @@ void clearResources(int signum) {
     //clear the message queue resources
     msgctl(msgq_id, IPC_RMID, (struct msqid_ds *) 0);
     semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (struct semid_ds *) 0);
-
-    //clear the semaphores resources
-    semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (union Semun) 0);
 }
