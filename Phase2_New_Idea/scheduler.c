@@ -230,7 +230,7 @@ void getProcess(int signum) {
     up(scheduler_pGenerator_sem);
 
     // TODO: MEMORY
-    checkMemoryFlag = 1;
+    checkMemoryFlag++;
 
     //check if that process was the terminating one (id = -1)
     if (message.process.id == -1) {

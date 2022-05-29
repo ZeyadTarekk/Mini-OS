@@ -78,7 +78,7 @@ void __SRTN_process_finish_handler(int signum) {
     __running_process = NULL;
 
     // TODO: MEMORY
-    checkMemoryFlag = 1;
+    checkMemoryFlag++;
 }
 
 void __SRTN_run(struct ProcessStruct *const process_to_run) {
@@ -319,11 +319,11 @@ void SRTN(struct PQueue *priority_queue) {
            isEmpty(waitPriorityQueue) == false) {
 
         // TODO: MEMORY
-        if (checkMemoryFlag == 1) {
+        if (checkMemoryFlag >= 1) {
             printf("=========================checkMemoryFlag===========================\n");
             struct Queue *dummy;
             tryAllocateProcessesPriorityQueue(priority_queue);
-            checkMemoryFlag = 0;
+            checkMemoryFlag--;
             printQueue(0);
         }
 
