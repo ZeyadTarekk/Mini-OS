@@ -37,7 +37,14 @@ void runProcess(struct ProcessStruct *d) {
 void processFinishedHandler(int signum) {
     isRunning = false;
     currentRunningProcess->executionTime = currentRunningProcess->runTime;
+    printf("====================================================");
+    printf("\nprocess with id =  %d finished current time = %d \n", currentRunningProcess->id,
+           getClk());
+    printf("====================================================\n");
     print_process_info(currentRunningProcess, 3);
+    printMemoryDetails(currentRunningProcess, 1);
+    deAllocateMyMemory(currentRunningProcess);
+    checkMemoryFlag = 1;
     free(currentRunningProcess);
     signal(SIGUSR2, processFinishedHandler);
 }
@@ -49,13 +56,18 @@ void HPF(struct PQueue *pq) {
     isRunning = false;
     printf("HPF Started\n");
     processesQueue = pq;
-    while (flag || !isEmpty(processesQueue) || isRunning) {
+    while (flag || !isEmpty(processesQueue) || isRunning || isEmpty(waitPriorityQueue) == false) {
+        if (checkMemoryFlag == 1) {
+//            printf("=========================checkMemoryFlag===========================\n");
+            tryAllocateProcessesPriorityQueue(processesQueue);
+            checkMemoryFlag = 0;
+//            printQueue(0);
+        }
         if (isEmpty(processesQueue))
             continue;
         if (!isRunning) {
             readyProcess = peek(processesQueue);
             pop(processesQueue);
-
             runProcess(readyProcess);
         }
     }
