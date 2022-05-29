@@ -2,6 +2,8 @@
 
 int algorithm;
 
+void printMemoryDetails(const struct ProcessStruct *const process, int state);
+
 #include "memoryProcess.h"
 
 //used to inform the scheduler that there is no other processes coming
@@ -194,7 +196,7 @@ void getProcess(int signum) {
     //receive from the message queue and add to the ready queue
     int rec_val = msgrcv(msgq_id, &message, sizeof(message.process), 7, !IPC_NOWAIT);
 
-    __SRTN_print_process_info(&message.process);
+//    __SRTN_print_process_info(&message.process);
 
     printf("message received: %d\n", message.process.id);
     fflush(stdout);

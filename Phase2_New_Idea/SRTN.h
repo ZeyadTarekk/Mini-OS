@@ -64,6 +64,10 @@ void __SRTN_process_finish_handler(int signum) {
     // Log to file
     print_process_info(__running_process, 3);
 
+    // log to memory file
+    printMemoryDetails(__running_process, 1);
+
+
     // DONE: Free allocated memory
     enQueue(finished_processes, __running_process);
 
@@ -311,7 +315,8 @@ void SRTN(struct PQueue *priority_queue) {
 
     int lastPid = -1;
     /*TODO: There still processes in the Queue or there still processes will be received*/
-    while (flag || isEmpty(priority_queue) == false || __running_process != NULL || isEmpty(waitPriorityQueue) == false) {
+    while (flag || isEmpty(priority_queue) == false || __running_process != NULL ||
+           isEmpty(waitPriorityQueue) == false) {
 
         // TODO: MEMORY
         if (checkMemoryFlag == 1) {

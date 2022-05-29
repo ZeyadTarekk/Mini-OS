@@ -157,6 +157,8 @@ void RR_process_finish_handler(int signum) {
 
     // Log to file
     print_process_info(running_process, 3);
+    // memory log file
+    printMemoryDetails(running_process, 1);
     // free process from memory
     free(running_process);
 

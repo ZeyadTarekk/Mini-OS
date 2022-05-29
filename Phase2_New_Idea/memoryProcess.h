@@ -152,6 +152,7 @@ void tryAllocateProcessesPriorityQueue(struct PQueue *priority_queue) {
 
             // Assign tree node to that of process struct
             tempHead->data->memoryNode = node;
+            printMemoryDetails(tempHead->data, 0);
 
             // TODO: MEMORY
             switch (algorithm) {
