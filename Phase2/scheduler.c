@@ -1,17 +1,33 @@
 #include "headers.h"
 
+int algorithm;
+
+void printMemoryDetails(const struct ProcessStruct *const process, int state);
+
+#include "memoryProcess.h"
+
 //used to inform the scheduler that there is no other processes coming
 int flag = 1;
+
+// Flag used to check if we need to allocate a memory for a process
+int checkMemoryFlag = 0;
 
 void print_process_info(const struct ProcessStruct *const, int);
 
 
+void printQueue(int);
+void printQ(int);
+
+#include "SRTN.h"
+#include "RR.h"
+#include "HPF.h"
+
 // global variables
 int msgq_id;
-int algorithm;
-int memorypid;
 int processesNum;
-int memory_scheduler_sem;
+int scheduler_pGenerator_sem;
+int quantum;
+
 //variables for scheduler.perf file
 int totalRunTime;
 int totalWaitingTime = 0;
@@ -24,13 +40,7 @@ struct msgbuff message;
 struct PQueue *priority_queue;
 struct Queue *queue;
 
-#include "SRTN.h"
-#include "RR.h"
-#include "HPF.h"
-
 void getProcess(int);
-
-void printQueue(int);
 
 void create_scheduler_log();
 
@@ -40,7 +50,7 @@ void createMemoryLog();
 
 
 void intializeMessageQueue() {
-    msgq_id = msgget(PROMEMSCH, 0666 | IPC_CREAT);
+    msgq_id = msgget(PROSCH, 0666 | IPC_CREAT);
 
     if (msgq_id == -1) {
         perror("Error in create message queue");
@@ -48,13 +58,13 @@ void intializeMessageQueue() {
     }
 }
 
-void initializeSemaphoreMemoryScheduler() {
+void initializeSemaphore() {
 
     // Create a semaphore to synchronize the scheduler with process generator
-    memory_scheduler_sem = semget(SEMAMEMSCH, 1, 0666 | IPC_CREAT);
+    scheduler_pGenerator_sem = semget(SEMA, 1, 0666 | IPC_CREAT);
 
     // Check is semaphore id is -1
-    if (memory_scheduler_sem == -1) {
+    if (scheduler_pGenerator_sem == -1) {
         perror("Error in creating semaphores");
         exit(-1);
     }
@@ -64,7 +74,7 @@ int main(int argc, char *argv[]) {
     // Create scheduler.log
     create_scheduler_log();
 
-    // Create memory.log
+    //Create memory.log
     createMemoryLog();
 
     //add signal handler to get the processes from process_generator
@@ -78,11 +88,17 @@ int main(int argc, char *argv[]) {
     initClk();
 
     //Initialize the semaphore
-    initializeSemaphoreMemoryScheduler();
+    initializeSemaphore();
 
     //Initialize the message queue
     intializeMessageQueue();
 
+    // Allocate memory tree
+    memoryTree = createMemoryTree(memorySize);
+
+    // Allocate the waitLists
+    waitPriorityQueue = createPriorityQueue();
+    waitQueue = createQueue();
 
     //get the algorithm number
     algorithm = atoi(argv[1]);
@@ -93,23 +109,20 @@ int main(int argc, char *argv[]) {
     //get the total run time of all processes
     totalRunTime = atoi(argv[3]);
 
-    //get the memory process PID
-    memorypid = getppid();
+    //get the quantum form RR algorithm
+    quantum = atoi(argv[4]);
 
-    /////////////////////////////////////////////////
     switch (algorithm) {
         case 1:
-            //Allocate the priority queue
+            // Allocate the priority queue
             priority_queue = createPriorityQueue();
-
-            //Call the algorithm function
+            // Call the algorithm function
             HPF(priority_queue);
 
             break;
         case 2:
             // Allocate the priority queue
             priority_queue = createPriorityQueue();
-
             // Call the algorithm function
             SRTN(priority_queue);
 
@@ -117,16 +130,13 @@ int main(int argc, char *argv[]) {
         case 3:
             // Allocate the queue
             queue = createQueue();
-
             // Call the algorithm function
-            RR(2, queue);
+            RR(quantum, queue);
             break;
     }
-    /////////////////////////////////////////////////
 
     printf("\n\n===================================scheduler Terminated at time = %d===================================\n\n",
-           getClk()
-    );
+           getClk());
 
     create_scheduler_perf();
 
@@ -135,31 +145,8 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-void add_to_SRTN_queue(struct ProcessStruct process) {
-    if (process.id != -1) {
-        // Push to the queue and the priority is the runTime (The remaining time at the beginning)
-        struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
-                                                          process.runTime, process.running,
-                                                          process.startedBefore, process.enterQueue, process.quitQueue,
-                                                          process.executionTime,
-                                                          process.waitingTime, process.pid);
-        push(priority_queue, newProcess, newProcess->runTime);
-    }
-}
-
-void add_to_HPF_queue(struct ProcessStruct process) {
-    if (process.id != -1) {
-        // Push to the queue and the priority is the priority (The priority of the process)
-        struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
-                                                          process.runTime, process.running,
-                                                          process.startedBefore, process.enterQueue, process.quitQueue,
-                                                          process.executionTime,
-                                                          process.waitingTime, process.pid);
-        push(priority_queue, newProcess, newProcess->priority);
-    }
-}
-
-void add_to_RR_queue(struct ProcessStruct process) {
+// Add to memory waiting list
+void add_to_wait_list(struct ProcessStruct process) {
     if (process.id != -1) {
         // enqueue (The remaining time at the beginning)
         struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
@@ -167,40 +154,30 @@ void add_to_RR_queue(struct ProcessStruct process) {
                                                           process.startedBefore, process.enterQueue, process.quitQueue,
                                                           process.executionTime,
                                                           process.waitingTime, process.pid);
-        enQueue(queue, newProcess);
+        newProcess->memsize = process.memsize;
+        addToWaitList(newProcess);
     }
 }
 
 void getProcess(int signum) {
     //receive from the message queue and add to the ready queue
-    int rec_val = msgrcv(msgq_id, &message, sizeof(message.process), 8, !IPC_NOWAIT);
+    int rec_val = msgrcv(msgq_id, &message, sizeof(message.process), 7, !IPC_NOWAIT);
 
-    printf("message received in scheduler: %d\n\n", message.process.id);
+    printf("message received: %d\n", message.process.id);
     fflush(stdout);
     if (rec_val == -1) {
         perror("Error in receive");
     }
 
-    ///////////////////////////////////////////////
-    switch (algorithm) {
-        case 1:
-            //DONE: Add to [PRIORITY QUEUE] as HPF
-            add_to_HPF_queue(message.process);
-            break;
-        case 2:
-            // DONE: Add to priority queue as SRTN
-            add_to_SRTN_queue(message.process);
-            break;
-        case 3:
-            // DONE: Add to [QUEUE] as RR
-            add_to_RR_queue(message.process);
-            break;
-    }
-    /////////////////////////////////////////////////
+    add_to_wait_list(message.process);
+    printWaitList();
 
     // Process has been pushed to the queue
     // Up the semaphore to allow process generator to continue
-    up(memory_scheduler_sem);
+    up(scheduler_pGenerator_sem);
+
+    // TODO: MEMORY
+    checkMemoryFlag++;
 
     //check if that process was the terminating one (id = -1)
     if (message.process.id == -1) {
@@ -210,11 +187,24 @@ void getProcess(int signum) {
 
 void printQueue(int sigNum) {
     printf("I have recieved signal %d\n", sigNum);
+    printf("Start\n");
     struct PQNode *start = priority_queue->head;
     while (start != NULL) {
         __SRTN_print_process_info(start->data);
         start = start->next;
     }
+    printf("End\n");
+}
+
+void printQ(int sigNum) {
+    printf("I have recieved signal %d\n", sigNum);
+    printf("Start\n");
+    struct QNode *start = queue->front;
+    while (start != NULL) {
+        print_RR_Info(start->data);
+        start = start->next;
+    }
+    printf("End\n");
 }
 
 void create_scheduler_log() {
@@ -354,14 +344,12 @@ void printMemoryDetails(const struct ProcessStruct *const process, int state) {
         exit(-1);
     }
 
-//    At time 3 allocated 200 bytes for process 2 from 256 t o 383
-//    At time 6 freed 200 bytes from process 2 from 256 t o 383
     if (state == 0)
         fprintf(outputFile, "At time %d allocated %d bytes for process %d from %d to %d\n", currentTime,
-                process->memsize, process->id, process->start, process->end);
+                process->memsize, process->id, process->memoryNode->data->start, process->memoryNode->data->end);
     else if (state == 1)
         fprintf(outputFile, "At time %d freed %d bytes for process %d from %d to %d\n", currentTime,
-                process->memsize, process->id, process->start, process->end);
+                process->memsize, process->id, process->memoryNode->data->start, process->memoryNode->data->end);
 
     fclose(outputFile);
 

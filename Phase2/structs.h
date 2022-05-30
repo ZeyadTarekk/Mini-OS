@@ -82,12 +82,8 @@ struct ProcessStruct
     // The real id of forked process
     int pid;
 
-    // Start of memory [0 : 1023 - min limit ]
-    // Min limit is initially defined with 8
-    int start;
-
-    // End of memory [0 + min limit : 1023]
-    int end;
+    // Pointer to the TNode allocated for this process
+    struct TNode *memoryNode;
 
 };
 
@@ -95,9 +91,7 @@ struct ProcessStruct
 /*
 Messages Type:
 ==============
-7 -> process from process_generator to memory to try to allocate
-8 -> process from memory to scheduler to run
-9 -> process from the scheduler to memory to deallocate
+7 -> process from process_generator to schedular
 */
 struct msgbuff
 {

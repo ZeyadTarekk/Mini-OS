@@ -40,6 +40,7 @@ void __SRTN_print_process_info(const struct ProcessStruct *const process) {
     printf("executionTime     : %d\n", process->executionTime);
     printf("pid               : %d\n", process->pid);
     printf("remaining time    : %d\n", __SRTN_get_remaining_time(process));
+    printf("memory size       : %d\n", process->memsize);
     printf("*********************************************\n");
     fflush(stdout);
 }
@@ -63,22 +64,21 @@ void __SRTN_process_finish_handler(int signum) {
     // Log to file
     print_process_info(__running_process, 3);
 
+    // log to memory file
+    printMemoryDetails(__running_process, 1);
+
+
     // DONE: Free allocated memory
     enQueue(finished_processes, __running_process);
 
-    //    send the process to be deallocated
-    //send the process to memory process using the message queue
-//    message.mtype = 9;
-//    message.process = *__running_process;
-//    int send_val = msgsnd(msgq_id, &message, sizeof(message.process), !IPC_NOWAIT);
-//
-//    printf("message sent from SRTN: %d\n", message.process.id);
-//    if (send_val == -1)
-//        perror("Error in send");
-//    kill(memorypid, SIGUSR2);
+    // TODO: MEMORY
+    deAllocateMyMemory(__running_process);
 
     // DONE: set __running_process to NULL
     __running_process = NULL;
+
+    // TODO: MEMORY
+    checkMemoryFlag++;
 }
 
 void __SRTN_run(struct ProcessStruct *const process_to_run) {
@@ -315,7 +315,17 @@ void SRTN(struct PQueue *priority_queue) {
 
     int lastPid = -1;
     /*TODO: There still processes in the Queue or there still processes will be received*/
-    while (flag || isEmpty(priority_queue) == false || __running_process != NULL) {
+    while (flag || isEmpty(priority_queue) == false || __running_process != NULL ||
+           isEmpty(waitPriorityQueue) == false) {
+
+        // TODO: MEMORY
+        if (checkMemoryFlag >= 1) {
+            printf("=========================checkMemoryFlag===========================\n");
+            struct Queue *dummy;
+            tryAllocateProcessesPriorityQueue(priority_queue);
+            checkMemoryFlag--;
+            printQueue(0);
+        }
 
         // DONE: Check if the queue is empty
         if (isEmpty(priority_queue)) {

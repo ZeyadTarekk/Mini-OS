@@ -3,10 +3,10 @@ The total memory size is 1024 bytes.
 Each process size is less than or equal 256 bytes.
 */
 
-//#include "Tree.h"
+#include "Tree.h"
 
-struct TNode *allocateMemory(struct TNode *, int, int);
-
+//ToBeRemoved
+// struct TNode *allocateMemory(struct TNode *, struct ProcessStruct *, int);
 //#include "structs.h"
 
 // Function used to get the first power of two that can fit the size
@@ -36,7 +36,7 @@ void splitMemory(struct TNode *root) {
 }
 
 //Utility function
-struct TNode *__allocateMemory(struct TNode *root, int id, int powerOfTwo) {
+struct TNode *__allocateMemory(struct TNode *root, struct ProcessStruct *process, int powerOfTwo) {
     // check if the root has no process and size is good --> then assign and return
     if ((root->data->hasProcess == true && (root->data->end - root->data->start + 1) == powerOfTwo)
         || (root->data->hasProcess == true && root->data->pid != -1)) {
@@ -46,23 +46,23 @@ struct TNode *__allocateMemory(struct TNode *root, int id, int powerOfTwo) {
     } else if (root->data->hasProcess == false && (root->data->end - root->data->start + 1) == powerOfTwo) {
         // found the perfect part in the memory to allocate the process in
         root->data->hasProcess = true;
-        root->data->pid = id;
+        root->data->pid = process->id;
         return root;
     } else {
         //check if it has no process then we need to split it into two parts
         if (root->data->hasProcess == false) {
             root->data->hasProcess = true;
             splitMemory(root);
-            return __allocateMemory(root->leftChild, id, powerOfTwo);
+            return __allocateMemory(root->leftChild, process, powerOfTwo);
         } else {
             //root have a running process
             //need to check the left branch first then check the right one
             if (root->leftChild == NULL)
                 splitMemory(root);
 
-            struct TNode *leftBranch = __allocateMemory(root->leftChild, id, powerOfTwo);
+            struct TNode *leftBranch = __allocateMemory(root->leftChild, process, powerOfTwo);
             if (leftBranch == NULL)
-                return __allocateMemory(root->rightChild, id, powerOfTwo);
+                return __allocateMemory(root->rightChild, process, powerOfTwo);
             else return leftBranch;
         }
     }
@@ -70,9 +70,9 @@ struct TNode *__allocateMemory(struct TNode *root, int id, int powerOfTwo) {
 
 // Function used to allocate memory for the sent process with the perfect size
 // Return NULL if there is no available memory at this moment
-struct TNode *allocateMemory(struct TNode *root, int id, int size) {
+struct TNode *allocateMemory(struct TNode *root, struct ProcessStruct *process, int size) {
     int powerOfTwo = getPowerOfTwo(size);
-    return __allocateMemory(root, id, powerOfTwo);
+    return __allocateMemory(root, process, powerOfTwo);
 }
 
 //Utility function
@@ -85,6 +85,7 @@ void __deAllocateMemory(struct TNode *memoryNodeToFree) {
     struct TNode *myParent = memoryNodeToFree->parent;
     // then free my memory process
 
+//ToBeRemoved
     printf("deallocating memory from process with PID %d from: %d to: %d\n", memoryNodeToFree->data->pid,
            memoryNodeToFree->data->start, memoryNodeToFree->data->end);
     
@@ -103,6 +104,7 @@ void __deAllocateMemory(struct TNode *memoryNodeToFree) {
     }
 
     if (mySibling->data->hasProcess == false) {
+//ToBeRemoved
         printf("My sibling is free, my pid: %d\n", oldPid);
         myParent->leftChild = NULL;
         myParent->rightChild = NULL;
@@ -112,23 +114,7 @@ void __deAllocateMemory(struct TNode *memoryNodeToFree) {
     }
 }
 
-struct TNode *__getTNodeByProcessID(struct TNode *root, int id) {
-    if (root != NULL)
-    {
-        if (root->data->pid == id)
-            return root;
-        else {
-            struct TNode* left = __getTNodeByProcessID(root->leftChild, id);
-            if (left != NULL)
-                return left;
-            else 
-                return __getTNodeByProcessID(root->rightChild, id);
-        }
-    }
-    return NULL;
-}
-
 //Function to be used by the scheduler
-void deAllocateMyMemory(struct TNode *node, int id) {
-    __deAllocateMemory(__getTNodeByProcessID(node, id));
+void deAllocateMyMemory(struct ProcessStruct *process) {
+    __deAllocateMemory(process->memoryNode);
 }

@@ -37,24 +37,16 @@ void runProcess(struct ProcessStruct *d) {
 void processFinishedHandler(int signum) {
     isRunning = false;
     currentRunningProcess->executionTime = currentRunningProcess->runTime;
+    printf("====================================================");
+    printf("\nprocess with id =  %d finished current time = %d \n", currentRunningProcess->id,
+           getClk());
+    printf("====================================================\n");
     print_process_info(currentRunningProcess, 3);
-
-    // Send the process to be deallocated
-    // Send the process to memory process using the message queue
-    message.mtype = 9;
-    message.process = *currentRunningProcess;
-    int send_val = msgsnd(msgq_id, &message, sizeof(message.process), !IPC_NOWAIT);
-
-    printf("message sent from HPF: %d\n", message.process.id);
-    if (send_val == -1)
-        perror("Errror in send");
-
-    kill(memorypid, SIGUSR2);
-
-    // Down the semaphore to make sure that the memory process deallocated the process
-    down(memory_scheduler_sem);
-
+    printMemoryDetails(currentRunningProcess, 1);
+    deAllocateMyMemory(currentRunningProcess);
+    checkMemoryFlag++;
     free(currentRunningProcess);
+    signal(SIGUSR2, processFinishedHandler);
 }
 
 void HPF(struct PQueue *pq) {
@@ -64,13 +56,18 @@ void HPF(struct PQueue *pq) {
     isRunning = false;
     printf("HPF Started\n");
     processesQueue = pq;
-    while (flag || !isEmpty(processesQueue) || isRunning) {
+    while (flag || !isEmpty(processesQueue) || isRunning || isEmpty(waitPriorityQueue) == false) {
+        if (checkMemoryFlag >= 1) {
+//            printf("=========================checkMemoryFlag===========================\n");
+            tryAllocateProcessesPriorityQueue(processesQueue);
+            checkMemoryFlag--;
+//            printQueue(0);
+        }
         if (isEmpty(processesQueue))
             continue;
         if (!isRunning) {
             readyProcess = peek(processesQueue);
             pop(processesQueue);
-
             runProcess(readyProcess);
         }
     }

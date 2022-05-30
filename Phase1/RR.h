@@ -17,8 +17,6 @@ void RR_process_finish_handler(int);
 
 struct ProcessStruct *running_process = NULL;
 
-// for testing till getting as a parameter in function
-//const int quantum = 3;
 int noOfFinishedProcesses = 0;
 
 
@@ -116,12 +114,8 @@ void RR_save_exit_queue_state(struct ProcessStruct *const process_to_run) {
     }
 
     int current_time = getClk();
-//    printf("\n=Left Queue:");
-//    printf("\n Current time = %d\n", current_time);
-//    print_RR_Info(process_to_run);
 
     //  Updating Values
-
     process_to_run->running = 1;
     process_to_run->quitQueue = current_time;
     process_to_run->waitingTime += current_time - process_to_run->enterQueue;
@@ -138,7 +132,6 @@ void RR_save_enter_queue_state(struct ProcessStruct *const process_to_stop) {
     int current_time = getClk();
     printf("\n=Entered Queue:");
     printf("\n Current time = %d\n", current_time);
-//    print_RR_Info(process_to_stop);
 
     process_to_stop->running = 0;
     process_to_stop->startedBefore = 1;
@@ -227,7 +220,6 @@ void RR(int quantum, struct Queue *queue) {
             prev = current;
 
         } else if (slots >= quantum && (slots % quantum) == 0 && turnedProcess->id != lastPid) {
-//            printf("\n====================  Shifting occurs at time : %d  ====================\n", current);
 
             // exchange with next process
             lastPid = turnedProcess->id;
@@ -278,5 +270,3 @@ void RR(int quantum, struct Queue *queue) {
 // intailize quantaum of new process
 // send messege to the process with its remaining time
 // get the remaining time of the currently running process
-
-

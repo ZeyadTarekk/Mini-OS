@@ -84,7 +84,6 @@ int main(int argc, char *argv[]) {
     //add signal handler to get the processes from process_generator
     signal(SIGUSR1, getProcess);
 
-//ToBeRemoved
     //for testing
     signal(SIGTRAP, printQueue);
 
@@ -215,7 +214,6 @@ void getProcess(int signum) {
     }
 }
 
-//ToBeRemoved
 void printQueue(int sigNum) {
     printf("I have recieved signal %d\n", sigNum);
     struct PQNode *start = priority_queue->head;

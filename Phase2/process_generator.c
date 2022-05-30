@@ -9,9 +9,10 @@ RR --> 3
 
 // global variables
 int msgq_id;
-int memory_pGenerator_sem;
+int scheduler_pGenerator_sem;
 int processesNum;
 int totalRunTime;
+int quantum = -1;
 struct msgbuff message;
 
 
@@ -42,8 +43,7 @@ void readFile(struct Queue *processQueue) {
         p->waitingTime = 0;
         p->pid = -1;
         p->memsize = memsize;
-        p->start = -1;
-        p->end = -1;
+        p->memoryNode = NULL;
 
         processesNum++;
         totalRunTime += runningtime;
@@ -66,11 +66,20 @@ int getSchedulingAlgorithm() {
         scanf("%d", &algorithm);
     }
 
+    if (algorithm == 3) {
+        printf("Enter the required Quantum\n");
+        scanf("%d", &quantum);
+        while (quantum < 1) {
+            printf("Enter a number bigger than 0\n");
+            scanf("%d", &quantum);
+        }
+    }
+
     return algorithm;
 }
 
 void intializeMessageQueue() {
-    msgq_id = msgget(PROMEMSCH, 0666 | IPC_CREAT);
+    msgq_id = msgget(PROSCH, 0666 | IPC_CREAT);
 
     if (msgq_id == -1) {
         perror("Error in create message queue");
@@ -78,13 +87,13 @@ void intializeMessageQueue() {
     }
 }
 
-void initializeSemaphoreMemoryProcessG() {
+void initializeSemaphore() {
 
     // Create a semaphore to synchronize the scheduler with process generator
-    memory_pGenerator_sem = semget(SEMAMEMPRO, 1, 0666 | IPC_CREAT);
+    scheduler_pGenerator_sem = semget(SEMA, 1, 0666 | IPC_CREAT);
 
     // Check is semaphore id is -1
-    if (memory_pGenerator_sem == -1) {
+    if (scheduler_pGenerator_sem == -1) {
         perror("Error in creating semaphores");
         exit(-1);
     }
@@ -92,19 +101,20 @@ void initializeSemaphoreMemoryProcessG() {
     // Initialize the semaphore
     union Semun semun;
     semun.val = 0;
-    if (semctl(memory_pGenerator_sem, 0, SETVAL, semun) == -1) {
-        perror("Error in internalizing memory_pGenerator_sem");
+    if (semctl(scheduler_pGenerator_sem, 0, SETVAL, semun) == -1) {
+        perror("Error in internalizing scheduler_pGenerator_sem");
         exit(-1);
     }
 }
 
 void sendProcess(struct ProcessStruct *process) {
-    //send the process to memory process using the message queue
+    //send the process to schedular using the message queue
     message.mtype = 7;
     message.process = *process;
     int send_val = msgsnd(msgq_id, &message, sizeof(message.process), !IPC_NOWAIT);
 
-    printf("message sent from process generator: %d\n", message.process.id);
+//ToBeRemoved
+    // printf("message sent: %d\n", message.process.id);
     if (send_val == -1)
         perror("Errror in send");
 }
@@ -112,6 +122,8 @@ void sendProcess(struct ProcessStruct *process) {
 void sendStopProcess() {
     struct ProcessStruct *process = (struct ProcessStruct *) malloc(sizeof(struct ProcessStruct));
     process->id = -1;
+//ToBeRemoved
+    // printf("Sending process with -1\n");
     sendProcess(process);
 }
 
@@ -120,7 +132,7 @@ int main(int argc, char *argv[]) {
     signal(SIGINT, clearResources);
 
     // Initialize the semaphore
-    initializeSemaphoreMemoryProcessG();
+    initializeSemaphore();
 
     //intialize the message queue
     intializeMessageQueue();
@@ -141,15 +153,9 @@ int main(int argc, char *argv[]) {
         execv(args[0], args);
     }
 
-    int memorypid = fork();
-    if (memorypid == 0) {
-        //run the memory file
-        // int length = snprintf(NULL, 0, "%d", schedulerpid);
-        // char *schedulerID = malloc(length + 1);
-        // snprintf(schedulerID, length + 1, "%d", schedulerpid);
-
-        // TODO: change the .out file to final name
-        // char *args[] = {"./memoryProcess.out", schedulerID, NULL};
+    int schedulerpid = fork();
+    if (schedulerpid == 0) {
+        //run the scheduler file
         int length = snprintf(NULL, 0, "%d", algorithm);
         char *algo = malloc(length + 1);
         snprintf(algo, length + 1, "%d", algorithm);
@@ -162,8 +168,11 @@ int main(int argc, char *argv[]) {
         char *totalRT = malloc(length + 1);
         snprintf(totalRT, length + 1, "%d", totalRunTime);
 
-        char *args[] = {"./memoryProcess.out", algo, procNum, totalRT, NULL};
+        length = snprintf(NULL, 0, "%d", quantum);
+        char *quant = malloc(length + 1);
+        snprintf(quant, length + 1, "%d", quantum);
 
+        char *args[] = {"./scheduler.out", algo, procNum, totalRT, quant, NULL};
         execv(args[0], args);
     }
 
@@ -191,10 +200,10 @@ int main(int argc, char *argv[]) {
         sendProcess(process);
 
         //send a signal to the schedular to be ready for the coming process
-        kill(memorypid, SIGUSR1);
+        kill(schedulerpid, SIGUSR1);
 
         // Down the semaphore to make sure that the scheduler has pushed the process to the queue
-        down(memory_pGenerator_sem);
+        down(scheduler_pGenerator_sem);
 
         //remove it from the queue
         deQueue(processQueue);
@@ -203,24 +212,21 @@ int main(int argc, char *argv[]) {
     //send a process with id = -1
     //to inform the schedular that there is no other processes coming
     sendStopProcess();
-    kill(memorypid, SIGUSR1);
-    down(memory_pGenerator_sem);
+    kill(schedulerpid, SIGUSR1);
 
-    //wait for the memory to finish before clearing the clock resources
-    waitpid(memorypid, NULL, 0);
+    //wait for the schedular to finish before clearing the clock resources
+    waitpid(schedulerpid, NULL, 0);
 
-    printf("==================  Process generator terminated  ======================\n");
+    printf("==================Process generator terminated======================\n");
 
     // 7. Clear clock resources
     destroyClk(true);
 }
 
 void clearResources(int signum) {
-    // Clears all resources in case of interruption
+    //TODO Clears all resources in case of interruption
 
-    // Clear the message queue resources
+    //clear the message queue resources
     msgctl(msgq_id, IPC_RMID, (struct msqid_ds *) 0);
-
-    // Clear the semaphores resources
-    semctl(memory_pGenerator_sem, 0, IPC_RMID, (struct semid_ds *) 0);
+    semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (struct semid_ds *) 0);
 }
