@@ -12,6 +12,7 @@ int msgq_id;
 int scheduler_pGenerator_sem;
 int processesNum;
 int totalRunTime;
+int quantum = -1;
 struct msgbuff message;
 
 
@@ -63,6 +64,15 @@ int getSchedulingAlgorithm() {
     while (algorithm > 3 || algorithm < 1) {
         printf("Enter a number from 1 to 3\n");
         scanf("%d", &algorithm);
+    }
+
+    if (algorithm == 3) {
+        printf("Enter the required Quantum\n");
+        scanf("%d", &quantum);
+        while (quantum < 1) {
+            printf("Enter a number bigger than 0\n");
+            scanf("%d", &quantum);
+        }
     }
 
     return algorithm;
@@ -158,7 +168,11 @@ int main(int argc, char *argv[]) {
         char *totalRT = malloc(length + 1);
         snprintf(totalRT, length + 1, "%d", totalRunTime);
 
-        char *args[] = {"./scheduler.out", algo, procNum, totalRT, NULL};
+        length = snprintf(NULL, 0, "%d", quantum);
+        char *quant = malloc(length + 1);
+        snprintf(quant, length + 1, "%d", quantum);
+
+        char *args[] = {"./scheduler.out", algo, procNum, totalRT, quant, NULL};
         execv(args[0], args);
     }
 

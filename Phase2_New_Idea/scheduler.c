@@ -27,6 +27,7 @@ void printQ(int);
 int msgq_id;
 int processesNum;
 int scheduler_pGenerator_sem;
+int quantum;
 
 //variables for scheduler.perf file
 int totalRunTime;
@@ -112,6 +113,9 @@ int main(int argc, char *argv[]) {
     //get the total run time of all processes
     totalRunTime = atoi(argv[3]);
 
+    //get the quantum form RR algorithm
+    quantum = atoi(argv[4]);
+
     switch (algorithm) {
         case 1:
             // Allocate the priority queue
@@ -131,7 +135,7 @@ int main(int argc, char *argv[]) {
             // Allocate the queue
             queue = createQueue();
             // Call the algorithm function
-            RR(2, queue);
+            RR(quantum, queue);
             break;
     }
 
