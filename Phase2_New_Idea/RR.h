@@ -68,7 +68,7 @@ void RR_run(struct ProcessStruct *const process) {
 
     printf("\n=Running:");
     printf("\n Current time = %d\n", getClk());
-    print_RR_Info(process);
+//    print_RR_Info(process);
 }
 
 void print_RR_Info(const struct ProcessStruct *const process) {
@@ -161,14 +161,16 @@ void RR_process_finish_handler(int signum) {
     // memory log file
     printMemoryDetails(running_process, 1);
 
-    // free process from memory
-    free(running_process);
 
     //deallocate from memory
     deAllocateMyMemory(running_process);
 
+    // free process from memory
+    free(running_process);
+
     // setting running_process to NULL
     running_process = NULL;
+
 
     // increment memory entered size
     checkMemoryFlag++;
@@ -212,9 +214,9 @@ void RR(int quantum, struct Queue *queue) {
 
         // check if there is a process ready to allocate in memory
         if (checkMemoryFlag >= 1) {
-            printf("=====================Before Allocation\"=====================\n");
+            printf("=====================Before Allocation\"=====================\n\n");
             tryAllocateProcessesQueue(queue);
-            printf("\"=====================After Allocation\"=====================\n");
+            printf("\"=====================After Allocation\"=====================\n\n");
             checkMemoryFlag--;
             printQ(0);
         }
@@ -243,13 +245,9 @@ void RR(int quantum, struct Queue *queue) {
 
             //setting prev to current time
             prev = current;
-            printf("==========================Previous:%d\n", prev);
-            printf("==========================Current:%d\n", current);
-            printf("==========================Slots:%d\n", slots);
-            printf("==========================QQ:%d\n", quantum);
 
         } else if (slots >= quantum && (slots % quantum) == 0 && turnedProcess->id != lastPid) {
-            printf("\n====================  Shifting occurs at time : %d  ====================\n", current);
+//            printf("\n====================  Shifting occurs at time : %d  ====================\n", current);
 
             // exchange with next process
             lastPid = turnedProcess->id;
