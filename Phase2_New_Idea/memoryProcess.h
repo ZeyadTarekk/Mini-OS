@@ -126,23 +126,31 @@ void removeFromWaitPriorityQueue(struct PQNode *node) {
     printWaitList();
 }
 
+
 void removeFromWaitQueue(struct QNode *node) {
 //ToBeRemoved edit all printf
     printf("Reeeeeeeeeeeeeecived Process %d has been allocated in memory\n", node->data->id);
 
     struct QNode *tempHead = waitQueue->front;
     if (tempHead == node) {
+        if (waitQueue->front == waitQueue->rear) {
+            waitQueue->front = NULL;
+            waitQueue->rear = NULL;
+            free(tempHead);
+            return;
+        }
         waitQueue->front = waitQueue->front->next;
         tempHead->next = NULL;
         printf("Freeeeeeeeeeeeeeeeeeeeeeeeeeeeeee head\n");
         free(tempHead);
         return;
+
     }
     while (tempHead->next != node) {
         tempHead = tempHead->next;
     }
     struct QNode *nodeToFree = tempHead->next;
-    printf("================================Process %d has been Deallocated From memory\n", 1);
+    printf("================================Process %d has been Deallocated From memory===========================================\n", 1);
     tempHead->next = nodeToFree->next;
     nodeToFree->next = NULL;
     free(nodeToFree);
