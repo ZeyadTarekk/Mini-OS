@@ -13,6 +13,7 @@ int scheduler_pGenerator_sem;
 int processesNum;
 int totalRunTime;
 struct msgbuff message;
+int quantum = -1;
 
 
 void clearResources(int);
@@ -62,7 +63,14 @@ int getSchedulingAlgorithm() {
         printf("Enter a number from 1 to 3\n");
         scanf("%d", &algorithm);
     }
-
+    if (algorithm == 3) {
+        printf("Enter the required Quantum\n");
+        scanf("%d", &quantum);
+        while (quantum < 1) {
+            printf("Enter a number bigger than 0\n");
+            scanf("%d", &quantum);
+        }
+    }
     return algorithm;
 }
 
@@ -154,7 +162,11 @@ int main(int argc, char *argv[]) {
         char *totalRT = malloc(length + 1);
         snprintf(totalRT, length + 1, "%d", totalRunTime);
 
-        char *args[] = {"./scheduler.out", algo, procNum, totalRT, NULL};
+        length = snprintf(NULL, 0, "%d", quantum);
+        char *quant = malloc(length + 1);
+        snprintf(quant, length + 1, "%d", quantum);
+
+        char *args[] = {"./scheduler.out", algo, procNum, totalRT, quant, NULL};
         execv(args[0], args);
     }
 
@@ -210,8 +222,8 @@ void clearResources(int signum) {
 
     //clear the message queue resources
     msgctl(msgq_id, IPC_RMID, (struct msqid_ds *) 0);
-    semctl(scheduler_pGenerator_sem, 0,IPC_RMID,(struct semid_ds *) 0);
+    semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (struct semid_ds *) 0);
 
     //clear the semaphores resources
-    semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (union Semun)0);
+    semctl(scheduler_pGenerator_sem, 0, IPC_RMID, (union Semun) 0);
 }

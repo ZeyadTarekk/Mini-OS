@@ -14,6 +14,7 @@ int msgq_id;
 int algorithm;
 int processesNum;
 int scheduler_pGenerator_sem;
+int quantum;
 
 //variables for scheduler.perf file
 int totalRunTime;
@@ -28,10 +29,12 @@ struct PQueue *priority_queue;
 struct Queue *queue;
 
 void getProcess(int);
+
 //ToBeRemoved
 void printQueue(int);
 
 void create_scheduler_log();
+
 void create_scheduler_perf();
 
 struct ProcessStruct *create_process
@@ -105,6 +108,9 @@ int main(int argc, char *argv[]) {
     //get the total run time of all processes
     totalRunTime = atoi(argv[3]);
 
+    //get the quantum form RR algorithm
+    quantum = atoi(argv[4]);
+
     switch (algorithm) {
         case 1:
             // Allocate the priority queue
@@ -124,23 +130,22 @@ int main(int argc, char *argv[]) {
             // Allocate the queue
             queue = createQueue();
             // Call the algorithm function
-            RR(2, queue);
+            RR(quantum, queue);
             break;
     }
 
     printf("\n\n===================================scheduler Terminated at time = %d===================================\n\n",
-            getClk());
+           getClk());
 
     create_scheduler_perf();
-    
+
     // Destroy your clock
     destroyClk(false);
     return 0;
 }
 
 void add_to_SRTN_queue(struct ProcessStruct process) {
-    if (process.id != -1)
-    {
+    if (process.id != -1) {
         // Push to the queue and the priority is the runTime (The remaining time at the beginning)
         struct ProcessStruct *newProcess = create_process(process.id, process.arrivalTime, process.priority,
                                                           process.runTime, process.running,
@@ -209,6 +214,7 @@ void getProcess(int signum) {
         flag = 0;
     }
 }
+
 //ToBeRemoved
 void printQueue(int sigNum) {
     printf("I have recieved signal %d\n", sigNum);
@@ -248,7 +254,7 @@ void create_scheduler_perf() {
 
     //Avg Waiting
     fprintf(outputFile, "%s", "Avg Waiting = ");
-    fprintf(outputFile, "%.2f\n", ((float)totalWaitingTime / processesNum));
+    fprintf(outputFile, "%.2f\n", ((float) totalWaitingTime / processesNum));
 
     //Std WTA
     meanWTA = sumWTA / processesNum;
