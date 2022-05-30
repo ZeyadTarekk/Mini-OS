@@ -5,10 +5,6 @@ Each process size is less than or equal 256 bytes.
 
 #include "Tree.h"
 
-//ToBeRemoved
-// struct TNode *allocateMemory(struct TNode *, struct ProcessStruct *, int);
-//#include "structs.h"
-
 // Function used to get the first power of two that can fit the size
 // EX: [97 -> 128]   [250 -> 256]   [64 -> 64]   [65 -> 128]
 int getPowerOfTwo(int size) {
