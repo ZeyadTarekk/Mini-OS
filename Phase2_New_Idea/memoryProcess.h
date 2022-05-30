@@ -205,6 +205,7 @@ void tryAllocateProcessesQueue(struct Queue *queue) {
             tempHead = tempHead->next;
             removeFromWaitQueue(tempHeadToRemove);
         } else {
+            printf("==================== Failed to Allocate in Memory ====================\n");
             tempHead = tempHead->next;
         }
     }

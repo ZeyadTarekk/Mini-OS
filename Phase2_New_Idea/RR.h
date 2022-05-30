@@ -20,6 +20,7 @@ struct ProcessStruct *running_process = NULL;
 // for testing till getting as a parameter in function
 //const int quantum = 3;
 int noOfFinishedProcesses = 0;
+//struct Queue *finishedProcessInQueue;
 
 
 int RR_get_the_clock() {
@@ -159,11 +160,18 @@ void RR_process_finish_handler(int signum) {
     print_process_info(running_process, 3);
     // memory log file
     printMemoryDetails(running_process, 1);
+
     // free process from memory
     free(running_process);
 
+    //deallocate from memory
+    deAllocateMyMemory(running_process);
+
     // setting running_process to NULL
     running_process = NULL;
+
+    // increment memory entered size
+    checkMemoryFlag++;
 
     signal(SIGUSR2, RR_process_finish_handler);
 
@@ -189,7 +197,7 @@ void RR_stop(const struct ProcessStruct *const process_to_stop) {
 void RR(int quantum, struct Queue *queue) {
 
     // Done: checking  the remaining time of each process
-    printf("\n\n****************Welcome to RR Algorithm****************\n\n");
+    printf("\n\n**************** Welcome To RR Algorithm ****************\n\n");
 
     signal(SIGUSR2, RR_process_finish_handler);
 
@@ -199,12 +207,20 @@ void RR(int quantum, struct Queue *queue) {
 
 
     // flag is used to terminate the scheduler
-    while (running_process != NULL || flag || isEmptyN(queue) == false) {
+    while (running_process != NULL || flag || isEmptyN(queue) == false || isEmptyN(waitQueue) == false) {
 
+
+        // check if there is a process ready to allocate in memory
+        if (checkMemoryFlag >= 1) {
+            printf("=====================Before Allocation\"=====================\n");
+            tryAllocateProcessesQueue(queue);
+            printf("\"=====================After Allocation\"=====================\n");
+            checkMemoryFlag--;
+            printQ(0);
+        }
         // check if there is no a process in the Queue or not
         if (isEmptyN(queue))
             continue;
-
 
         // get the turned process from the queue  before executing
         struct ProcessStruct *turnedProcess = peekN(queue);
@@ -227,9 +243,13 @@ void RR(int quantum, struct Queue *queue) {
 
             //setting prev to current time
             prev = current;
+            printf("==========================Previous:%d\n", prev);
+            printf("==========================Current:%d\n", current);
+            printf("==========================Slots:%d\n", slots);
+            printf("==========================QQ:%d\n", quantum);
 
         } else if (slots >= quantum && (slots % quantum) == 0 && turnedProcess->id != lastPid) {
-//            printf("\n====================  Shifting occurs at time : %d  ====================\n", current);
+            printf("\n====================  Shifting occurs at time : %d  ====================\n", current);
 
             // exchange with next process
             lastPid = turnedProcess->id;
@@ -271,7 +291,8 @@ void RR(int quantum, struct Queue *queue) {
         }
 
     }
-    printf("\n\n*************RR Terminated at  time = %d*************\n\n", getClk());
+    printf("\n\n================================ RR Terminated at  time =%d================================\n\n",
+           getClk());
 }
 
 

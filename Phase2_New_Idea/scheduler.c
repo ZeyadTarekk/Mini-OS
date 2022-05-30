@@ -17,6 +17,7 @@ void print_process_info(const struct ProcessStruct *const, int);
 
 //ToBeRemoved
 void printQueue(int);
+void printQ(int);
 
 #include "SRTN.h"
 #include "RR.h"
@@ -157,6 +158,7 @@ void add_to_SRTN_queue(struct ProcessStruct process) {
         push(priority_queue, newProcess, newProcess->runTime);
     }
 }
+
 //ToBeRemoved
 void add_to_HPF_queue(struct ProcessStruct process) {
     if (process.id != -1) {
@@ -170,6 +172,7 @@ void add_to_HPF_queue(struct ProcessStruct process) {
         push(priority_queue, newProcess, newProcess->priority);
     }
 }
+
 //ToBeRemoved
 void add_to_RR_queue(struct ProcessStruct process) {
     if (process.id != -1) {
@@ -249,6 +252,17 @@ void printQueue(int sigNum) {
     struct PQNode *start = priority_queue->head;
     while (start != NULL) {
         __SRTN_print_process_info(start->data);
+        start = start->next;
+    }
+    printf("End\n");
+}
+
+void printQ(int sigNum) {
+    printf("I have recieved signal %d\n", sigNum);
+    printf("Start\n");
+    struct QNode *start = queue->front;
+    while (start != NULL) {
+        print_RR_Info(start->data);
         start = start->next;
     }
     printf("End\n");
