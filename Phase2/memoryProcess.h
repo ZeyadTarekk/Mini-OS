@@ -149,7 +149,7 @@ void tryAllocateProcessesQueue(struct Queue *queue) {
 
             // Assign tree node to that of process struct
             tempHead->data->memoryNode = node;
-
+            printMemoryDetails(tempHead->data, 0);
             // TODO: MEMORY
             enQueue(queue, tempHead->data);
             struct QNode *tempHeadToRemove = tempHead;
