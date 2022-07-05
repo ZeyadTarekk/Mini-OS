@@ -1,4 +1,4 @@
-<h3 align="center">Sqrt OS</h3>
+<h3 align="center">Mini OS</h3>
 
 [![GitHub contributors](https://img.shields.io/github/contributors/ZeyadTarekk/Mini-OS)](https://github.com/ZeyadTarekk/Mini-OS/contributors)
 [![GitHub issues](https://img.shields.io/github/issues/ZeyadTarekk/Mini-OS)](https://github.com/ZeyadTarekk/Mini-OS/issues)
