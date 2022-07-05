@@ -1,5 +1,6 @@
 <h3 align="center">Mini OS</h3>
 
+<div align="center">
 [![GitHub contributors](https://img.shields.io/github/contributors/ZeyadTarekk/Mini-OS)](https://github.com/ZeyadTarekk/Mini-OS/contributors)
 [![GitHub issues](https://img.shields.io/github/issues/ZeyadTarekk/Mini-OS)](https://github.com/ZeyadTarekk/Mini-OS/issues)
 [![GitHub license](https://img.shields.io/github/license/ZeyadTarekk/Mini-OS)](https://github.com/ZeyadTarekk/Mini-OS/blob/master/LICENSE)
@@ -38,7 +39,7 @@
 1. HPF (Highest Priority First)
 2. STRN (Shortest Time Remaining Next)
 3. RR (Round Robin)
-> For memory we are using the buddy memory allocation system.
+   > For memory we are using the buddy memory allocation system.
 
 <div align='center'><img src="screenshots/sys1.png"></div>
 
