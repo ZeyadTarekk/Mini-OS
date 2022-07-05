@@ -38,7 +38,7 @@
 1. HPF (Highest Priority First)
 2. STRN (Shortest Time Remaining Next)
 3. RR (Round Robin)
-   > For memory we are using the buddy memory allocation system.
+> For memory we are using the buddy memory allocation system.
 
 <div align='center'><img src="screenshots/sys1.png"></div>
 
