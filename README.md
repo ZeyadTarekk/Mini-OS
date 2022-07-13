@@ -1,4 +1,6 @@
-<h3 align="center">Mini OS</h3>
+<div align="center">
+<img width="400" height="400" src="screenshots/kernal.png">
+</div>
 
 <div align="center">
 
